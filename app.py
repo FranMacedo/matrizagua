@@ -180,7 +180,7 @@ ar_totais = pd.concat([aguas_r_df.drop(['Lisboa', 'Outros Concelhos', 'lis_perc'
 ar_totais.sort_index(inplace=True)
 
 with open(
-        "C:\\Users\\Vasco Abreu - PC\\Documents\\Python Projects\\Matriz_Agua\\data\\Freguesias2012\\Freguesias2012") as geofile:
+        "data/Freguesias2012/Freguesias2012") as geofile:
     freguesias_jsn = json.load(geofile)
 i = 1
 for freg in freguesias_jsn["features"]:
