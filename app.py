@@ -308,7 +308,7 @@ freg_container = html.Div([
             dbc.Col([
 
                 dbc.Row([
-                    html.Div(dcc.Graph(id='bar-freguesias'), id="bar-freg-container")
+                    html.Div(dcc.Graph(id='bar-freguesias'), id="bar-freg-container", style={'width': '99%'})
                 ])
             ], width=4
             ),
@@ -754,7 +754,7 @@ def update_bar_freguesias(ano_select, drop_select, at):
     layout_freg = copy.deepcopy(layout)
 
     layout_freg['margin'] = dict(l=0, b=0, t=0, r=0)
-    layout_freg['autosize'] = False
+    layout_freg['autosize'] = True
 
     layout_freg['hovermode'] = "y"
     fig.update_xaxes(showticklabels=False, range=[0,values.max()*1.2])
