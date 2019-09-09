@@ -312,7 +312,7 @@ freg_container = html.Div([
                 ])
             ], width=4
             ),
-        ]
+        ], align="center", justify="around"
     )
 ], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%"})
 
