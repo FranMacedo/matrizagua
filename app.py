@@ -11,6 +11,9 @@ import json
 import math
 import numpy as np
 
+
+
+
 ctx = dash.callback_context
 
 mapbox_access_token = 'pk.eyJ1IjoiZm1hY2VkbyIsImEiOiJjanp0a3FlZzEwNXdyM2hteDRmOTNsZDI3In0.UMzEBHFVDraOT5AkHcbe7A'
@@ -303,18 +306,18 @@ freg_container = html.Div([
                         html.Div(dcc.Graph(id='mapa-freguesias'), id="map-freg-container")
                     ), justify='center'
                 )
-            ], width=5),
+            ], width=6),
 
             dbc.Col([
 
                 dbc.Row([
-                    html.Div(dcc.Graph(id='bar-freguesias'), id="bar-freg-container", style={'width': '99%'})
+                    html.Div(dcc.Graph(id='bar-freguesias'), id="bar-freg-container", style={'margin-right': '99%'})
                 ])
-            ], width=4
+            ], width=6
             ),
         ], align="center", justify="around"
     )
-], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%"})
+], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%", 'margin':'0'})
 
 
 donut_container = html.Div(
@@ -752,9 +755,9 @@ def update_bar_freguesias(ano_select, drop_select, at):
     )])
 
     layout_freg = copy.deepcopy(layout)
-
+    # 'height': '80vh
     layout_freg['margin'] = dict(l=0, b=0, t=0, r=0)
-    layout_freg['autosize'] = True
+    # layout_freg['autosize'] = True
 
     layout_freg['hovermode'] = "y"
     fig.update_xaxes(showticklabels=False, range=[0,values.max()*1.2])
