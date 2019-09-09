@@ -315,7 +315,7 @@ freg_container = html.Div([
                 ])
             ], width=6
             ),
-        ], align="center", justify="around"
+        ], align="center", justify="center"
     )
 ], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%", 'margin':'0'})
 
@@ -439,7 +439,7 @@ tab_consumo = html.Div(
 
                                         ],  className='pretty_container', style={'margin-left':'2%'}),
                                     dbc.Row([freg_container],  style={'margin-left':'2%'})
-                                    ], width={'size': 9, 'offset': 2}
+                                    ], width={'size': 10, 'offset': 2}
                             )
                         ])
 
