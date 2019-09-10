@@ -335,7 +335,7 @@ donut_container = html.Div(
                             # , tanks
                             html.H6(id="header-donut", style=TITLE_STYLE),
 
-                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}),
+                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}, style={'font-size':"20px"}),
                             collapse,
 
                          ],
