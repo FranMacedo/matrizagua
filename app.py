@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import copy
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -315,14 +315,29 @@ freg_container = html.Div([
     )
 ], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%", 'margin':'0'})
 
-
+collapse = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-button",
+            size="sm",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody("Mais Informações sobre este gráfico."), style= {'font-style': 'italic'}),
+            id="collapse",
+        ),
+    ], style={'font-family': family_generico},
+)
 donut_container = html.Div(
                         [
-
-
                             # , tanks
                             html.H6(id="header-donut", style=TITLE_STYLE),
-                            dcc.Graph(id='donut-sector', config={'displayModeBar': False})
+
+                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}),
+                            collapse,
 
                          ],
                         )
@@ -916,13 +931,25 @@ def update_mapa_freguesias(ano_select, drop_select, at):
     return {'visibility': 'visible'}, None, False, fig
 
 
+
+@app.callback(
+    Output("collapse", "is_open"),
+    [
+     Input("collapse-button", "n_clicks"),
+     ],
+    [State("collapse", "is_open")],
+)
+def toggle_collapse_donut(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 @app.callback(
     [Output('donut-sector', 'figure'),
      Output('header-donut', 'children')],
     [Input('year-slider', 'value'),
-     Input('drop-cons', 'value')
-     ]
-)
+     Input('drop-cons', 'value'),
+     ],)
 def update_donut(ano_select, drop_cons):
     layout_donut = copy.deepcopy(layout)
 
