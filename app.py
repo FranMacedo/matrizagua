@@ -55,16 +55,12 @@ df_fregs = pd.read_excel(file_path_freg)
 freg_center = pd.read_csv(file_path_freg_center, encoding='utf-8')
 sector_df = pd.read_excel(file_path_sector, index_col='Ano')
 ndom_df = pd.read_excel(file_path_ndom, index_col='Ano')
-bal_geral_df = pd.read_excel(file_path_balanco_geral, index_col='Ano')
 bal_potavel_df = pd.read_excel(file_path_balanco_potavel, index_col='Ano')
 bal_pot_ts_df = pd.read_excel(file_path_bal_potavel_ts, index_col='Ano')
 aguas_r_df = pd.read_excel(file_path_ar, index_col='Ano')
 ar_centro_df = pd.read_excel(file_path_ar_centro)
 ar_reu_df = pd.read_excel(file_path_ar_reu, index_col='Ano')
 
-
-bal_geral_df_2018 = bal_geral_df.loc[2018, :]
-bal_potavel_df_2018 = bal_potavel_df.loc[2018, :]
 
 max_sector_total = math.ceil(sector_df.iloc[:,:-1].max().max()/1000)
 size_small = 192
@@ -211,7 +207,7 @@ side_bar_cons = html.Div(
                 html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
                         style=TITLE_STYLE),
                 html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
-                dcc.Graph(id="ano-bar-graph"),
+                dcc.Graph(id="ano-bar-graph", config={'displayModeBar': False}),
                 html.Div([dcc.Slider(
                     id='year-slider',
                     min=sector_df.index.min(),
@@ -233,7 +229,7 @@ side_bar_bal = html.Div(
                 dbc.Row(html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
                         style=TITLE_STYLE), align="center", justify="center"),
                 html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
-                dcc.Graph(id="ano-bar-graph-bal"),
+                dcc.Graph(id="ano-bar-graph-bal", config={'displayModeBar': False}),
                 html.Div([dcc.Slider(
                     id='year-slider-bal',
                     min=bal_potavel_df.index.min(),
@@ -254,7 +250,7 @@ side_bar_ar = html.Div(
                 style=TITLE_STYLE), align="center", justify="center"),
         html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
 
-        dcc.Graph(id="ano-bar-graph-ar"),
+        dcc.Graph(id="ano-bar-graph-ar", config={'displayModeBar': False}),
         html.Div([dcc.Slider(
             id='year-slider-ar',
             min=aguas_r_df.index.min(),
@@ -271,7 +267,7 @@ freg_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
         dbc.Col([
-                 html.H6(id="header-bar-freg", style=TITLE_STYLE),
+                 html.H6(id="header-freg", style=TITLE_STYLE),
                  dbc.Alert(
                      color="danger",
                      id='alert-map',
@@ -303,7 +299,7 @@ freg_container = html.Div([
             dbc.Col([
                 dbc.Row(
                     dbc.Col(
-                        html.Div(dcc.Graph(id='mapa-freguesias'), id="map-freg-container")
+                        html.Div(dcc.Graph(id='mapa-freguesias', config={'displayModeBar': False}), id="map-freg-container")
                     ), justify='center'
                 )
             ], width=6),
@@ -311,7 +307,7 @@ freg_container = html.Div([
             dbc.Col([
 
                 dbc.Row([
-                    html.Div(dcc.Graph(id='bar-freguesias'), id="bar-freg-container", style={'margin-right': '99%'})
+                    html.Div(dcc.Graph(id='bar-freguesias', config={'displayModeBar': False}), id="bar-freg-container", style={'margin-right': '99%'})
                 ])
             ], width=6
             ),
@@ -326,7 +322,7 @@ donut_container = html.Div(
 
                             # , tanks
                             html.H6(id="header-donut", style=TITLE_STYLE),
-                            dcc.Graph(id='donut-sector')
+                            dcc.Graph(id='donut-sector', config={'displayModeBar': False})
 
                          ],
                         )
@@ -334,7 +330,7 @@ donut_container = html.Div(
 info_button = html.Div(
     [
         html.I(className="fas fa-question-circle fa-sm", id="target"),
-        dbc.Tooltip("Some help text", target="target"),
+        dbc.Tooltip("O consumo de água potável em Lisboa pode ser desagregado de várias formas. Nesta matriz, apresenta-se o consumo de água potável por sector de consumo e por consumo não doméstico.", target="target"),
     ],
     className="p-5 text-muted"
 )
@@ -384,7 +380,8 @@ ano_line_container = html.Div(
 header_consumo = html.Div([
                             dbc.Row([
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                                dbc.Col(html.H6("Consumo de Água Potável", style=TITLE_STYLE), width=3, align="center"),
+                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button], align="center", justify="center", no_gutters=True), width=5, align="center"),
+                                # dbc.Col(info_button, width=1, style={'textAlign': 'right'}),
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                             ], justify="center"),
@@ -451,13 +448,20 @@ bal_container = html.Div([
     dbc.Row(
         dbc.Col(
             [
-                dbc.Row(html.H6(id='bal-header', style=TITLE_STYLE), align="center", justify="center"),
+                dbc.Row(
+                    [
+                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+
+                        dbc.Col(html.H6(id='bal-header', style=TITLE_STYLE), width=6, align='center'),
+                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+
+                    ], align="center", justify="center"),
                 dcc.Graph(figure={'layout': {'autosize': True}}, id='bal-potavel',
                       hoverData={'points': [
                           {'group': False, 'pointNumber': 5, 'label': 'Água para consumo humano: 93.5', 'color': '#ccbbaf',
                            'index': 5, 'value': 93.5, 'depth': 0, 'height': 3, 'x0': 0, 'x1': 30, 'y0': 2.433608869978343e-13,
                            'y1': 270, 'originalX': 15, 'originalY': 135.0000000000001, 'originalLayerIndex': 0,
-                           'originalLayer': 0, 'dx': 30, 'dy': 269.9999999999998, 'curveNumber': 0}]},
+                           'originalLayer': 0, 'dx': 30, 'dy': 269.9999999999998, 'curveNumber': 0}]}, config={'displayModeBar': False},
                       # style={'width': 1000}
                       ),
                 html.Hr()
@@ -468,7 +472,16 @@ bal_container = html.Div([
     dbc.Row(
         dbc.Col(
             [
-                dbc.Row(html.H6('Variação Anual dos Diferentes Fluxos de Água', style=TITLE_STYLE), justify="center"),
+                dbc.Row(
+                    [
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+
+                    dbc.Col(html.H6('Variação Anual dos Diferentes Fluxos de Água', style=TITLE_STYLE), width=6, align='center'),
+
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+
+            ], justify="center"),
+
                 dbc.Row([
                     dbc.Col("Filtrar por fluxo de água:", width=2, align="center", style=INSTRUCTION_STYLE_right),
                     dbc.Col(
@@ -498,7 +511,7 @@ bal_container = html.Div([
                         ), width=6
                     ),
                 ], justify='center', align="start", no_gutters=True),
-                dcc.Graph(id='bal-timeseries')]
+                dcc.Graph(id='bal-timeseries', config={'displayModeBar': False})]
         )
     )
 
@@ -510,23 +523,31 @@ tab_balanco = html.Div([
     ], justify='around'),
 ])
 
-tab_residuais = html.Div([
+ar_1_container = html.Div([
     dbc.Row([
-        dbc.Col(side_bar_ar, className="pretty_container", width=3, style={'margin-top':'0.8%'}),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+        dbc.Col(html.H6(id="header-bar-ar", style=TITLE_STYLE), width=7, align='center'),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+    ], justify='center'),
 
-        dbc.Col([
-            dbc.Row([
-                dbc.Col(html.H6(id="header-bar-ar", style=TITLE_STYLE), width=12),
-                dbc.Row([
-                    dbc.Col(dcc.Graph(id='bar-ar'), width=6),
-                    dbc.Col(dcc.Graph(id='map-ar'), width=6)
-                ])
-            ], className="pretty_container", align="center", style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"}),
-            dbc.Row(
-                [
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='bar-ar', config={'displayModeBar': False}), width=6),
+        dbc.Col(dcc.Graph(id='map-ar', config={'displayModeBar': False}), width=6)
+    ], justify='center')
+])
+
+
+
+ar_2_container = html.Div(
+                [   dbc.Row([
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                    dbc.Col(html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), width=6, align="center"),
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+
+                ], justify='center'),
+                    dbc.Col("Filtrar por tipo de fluxo:", align="center", width=12, style=INSTRUCTION_STYLE_center),
+
                     dbc.Row([
-                        dbc.Col("Filtrar por estação de tratamento:", width=2, align="center",
-                                style=INSTRUCTION_STYLE_center),
                         dbc.Col(
                             dbc.RadioItems(
                                 options=[
@@ -543,7 +564,7 @@ tab_residuais = html.Div([
                                 id="radio-ar",
                                 inline=True,
                             ),
-                            width=2, style={'font-family': family_generico}
+                            width=5, style={'font-family': family_generico}
 
                         ),
                         dbc.Col(
@@ -557,16 +578,36 @@ tab_residuais = html.Div([
                             ), width=6
                         ),
                     ], justify='center', align="start", no_gutters=True),
-                    dbc.Col(dcc.Graph(id='ar-timeseries'), width=12),
-                ], className="pretty_container", align="center", style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"})
+                    dbc.Col(dcc.Graph(id='ar-timeseries', config={'displayModeBar': False}), width=12),
+                ], style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"})
+
+tab_residuais = html.Div([
+
+        dbc.Row([
+            dbc.Col(side_bar_ar, className="pretty_container", width=3, style={'margin-top': '0.8%'}),
 
 
-        ], width={'size':9}),
 
+            dbc.Col([
+                dbc.Row([
+                    dbc.Col([
+                        ar_1_container
+                    ], width=12),
+                ]),
 
-    ]),
+                dbc.Row([
+                    ar_2_container
+                ])
+
+            ], width=8, className="pretty_container", align="center",
+                style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"}),
 
 ])
+
+
+        ]),
+
+
 
 
 tabs = dbc.Tabs(
@@ -695,13 +736,15 @@ def update_ano_bar_ar(ano_select, at):
     df = df[~bad_df]
     df = df.loc[df.Subsistema == 'Total - Água Tratada', 'Total'].to_frame()
     df = df*1000
-    return create_ano_bar_graph(df, ano_select)
+    fig = create_ano_bar_graph(df, ano_select)
+    fig.update_layout(xaxis_tickangle=-80)
+    return fig
 
 
 @app.callback(
     [
         Output('drop-freg-container', 'style'),
-        Output('header-bar-freg', 'children'),
+        Output('header-freg', 'children'),
         Output('bar-freg-container', 'style'),
         Output('bar-freguesias', 'figure')
     ],
@@ -1217,7 +1260,7 @@ def update_balanco(ano_select, at):
     color_line = [color_balanco_live_d[x] for x in df['Ordem']]
     color_fill = [color_balanco_dead_d[x] for x in df['Ordem']]
 
-    my_text = [nome + ": " + str(valor) for nome, valor in
+    my_text = [nome + ": " + str(valor) + unidade_1 for nome, valor in
                zip(list(df['Ordem']), list(df['value']))]
 
     fig = go.Figure(data=[dict(
@@ -1404,9 +1447,9 @@ def update_bar_ar(ano_select, at):
     # df['lis_perc'] = df['Lisboa']/df['Total']*100
     # df['out_perc'] = df['Outros Concelhos']/df['Total']*100
     df = df.replace(0, np.nan)
-    my_text_hover_lis = ['{:.2f}'.format(val) + 'M' + " (" + '{:.1f}'.format(perc) + "%)" + '<br>Ano: ' + str(ano_select) for val, perc in
+    my_text_hover_lis = ['{:.2f}'.format(val) + unidade_1 + " (" + '{:.1f}'.format(perc) + "%)" + '<br>Ano: ' + str(ano_select) for val, perc in
                         zip(list(df['Lisboa']), list(df['lis_perc']))]
-    my_text_hover_out = ['{:.2f}'.format(val) + 'M' + " (" + '{:.1f}'.format(perc) + "%)" + '<br>Ano: ' + str(ano_select) for val, perc in
+    my_text_hover_out = ['{:.2f}'.format(val) + unidade_1 + " (" + '{:.1f}'.format(perc) + "%)" + '<br>Ano: ' + str(ano_select) for val, perc in
                         zip(list(df['Outros Concelhos']), list(df['out_perc']))]
 
     my_text_show_lis = ['{:.0f}'.format(val) + 'M' for val in
@@ -1454,7 +1497,7 @@ def update_bar_ar(ano_select, at):
                      autorange=False, fixedrange=True, showticklabels=False, title_text="Milhões de {}".format(unidade))
 
     # fig.show()
-    title = "Águas Residuais (AR) Tratadas, nas ETAR de Lisboa, em {}".format(ano_select)
+    title = "Águas Residuais (AR) Tratadas, nas ETAR de Lisboa, em {0} ({1})".format(ano_select, unidade)
     return fig, title
 
 
