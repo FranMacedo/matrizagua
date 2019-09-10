@@ -178,8 +178,7 @@ ar_options = [{'label': sect,
 ar_totais = pd.concat([aguas_r_df.drop(['Lisboa', 'Outros Concelhos', 'lis_perc', 'out_perc'], axis=1), ar_reu_df])
 ar_totais.sort_index(inplace=True)
 
-with open(
-        "data/Freguesias2012/Freguesias2012") as geofile:
+with open("data/Freguesias2012/Freguesias2012") as geofile:
     freguesias_jsn = json.load(geofile)
 i = 1
 for freg in freguesias_jsn["features"]:
@@ -425,9 +424,9 @@ tab_consumo = html.Div(
                     [
                         dbc.Row([
 
-                                dbc.Col(side_bar_cons, style={"position": "fixed", "width": "inherit",   'margin-left': '0.8%'},
+                                dbc.Col(dbc.Col(side_bar_cons, style={"position": "fixed", "width": "inherit", 'margin-left': '0.8%'},
 
-                                className='pretty_container', width=2),
+                                className='pretty_container', width=2), width=2),
 
                             dbc.Col(
                                 [
@@ -451,7 +450,7 @@ tab_consumo = html.Div(
 
                                         ],  className='pretty_container', style={'margin-left':'2%'}),
                                     dbc.Row([freg_container],  style={'margin-left':'2%'})
-                                    ], width={'size': 10, 'offset': 2}
+                                    ], width={'size': 10}, style={'margin-left':'19%', 'position': 'relative'}
                             )
                         ])
 
