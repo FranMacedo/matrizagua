@@ -359,7 +359,7 @@ ano_line_container = html.Div(
                                         style=INSTRUCTION_STYLE_center, width=3, align="start")], justify='center', style={'margin-bottom': '2%'}),
                             dbc.Row([
                                      dbc.Col(
-                                    dbc.RadioItems(
+                                    dcc.RadioItems(
                                         options=[
                                             {"label": "Todos", "value": "Todos"},
                                             {"label": "Personalizado", "value": "Personalizado"},
@@ -367,8 +367,10 @@ ano_line_container = html.Div(
                                         ],
                                         value="Personalizado",
                                         id="radio-ano-line",
-                                        inline=True,
-                                        switch=True,
+                                        labelStyle={'display': 'inline-block', 'margin-left': '4%'},
+                                        # inline=True,
+                                        # switch=True,
+                                        # inputStyle={'padding': '1.8rem'}
 
                                     ),
                                     width=6, align="center", style={'textAlign':"center", 'font-family': family_generico}
@@ -424,7 +426,7 @@ tab_consumo = html.Div(
                     [
                         dbc.Row([
 
-                                dbc.Col(dbc.Col(side_bar_cons, style={"position": "fixed", "width": "inherit", 'margin-left': '0.8%'},
+                                dbc.Col(dbc.Col(side_bar_cons, style={"position": "fixed", "width": "inherit"},
 
                                 className='pretty_container', width=2), width=2),
 
@@ -450,11 +452,11 @@ tab_consumo = html.Div(
 
                                         ],  className='pretty_container', style={'margin-left':'2%'}),
                                     dbc.Row([freg_container],  style={'margin-left':'2%'})
-                                    ], width={'size': 10}, style={'margin-left':'19%', 'position': 'relative'}
+                                    ], width={'size': 10}, style={'margin-left': '17%', 'position': 'relative'}
                             )
                         ])
 
-                    ]
+                    ], style={'margin-top': '0.8%'}
 )
 
 bal_container = html.Div([
@@ -499,7 +501,7 @@ bal_container = html.Div([
                 dbc.Row([
                     dbc.Col("Filtrar por fluxo de água:", width=2, align="center", style=INSTRUCTION_STYLE_right),
                     dbc.Col(
-                        dbc.RadioItems(
+                        dcc.RadioItems(
                             options=[
                                 {"label": "Todos", "value": "Todos"},
                                 {"label": "Personalizado", "value": "Personalizado"},
@@ -507,8 +509,9 @@ bal_container = html.Div([
                             ],
                             value="Personalizado",
                             id="radio-bal",
-                            inline=True,
-                            switch=True,
+                            labelStyle={'display': 'inline-block', 'margin-left': '4%'},
+                            # inline=True,
+                            # switch=True,
 
                         ),
                         width=3, align="center", style={'textAlign': "center", 'font-family': family_generico}
@@ -532,10 +535,10 @@ bal_container = html.Div([
 ])
 tab_balanco = html.Div([
     dbc.Row([
-        dbc.Col(html.Div(side_bar_bal, style={'textAlign':'center'}), className='pretty_container', width=3),
-        dbc.Col(bal_container, className='pretty_container', width=8)
-    ], justify='around'),
-])
+        dbc.Col(html.Div(side_bar_bal, style={'textAlign': 'center'}), className='pretty_container', width=3, style={'textAlign': 'left', 'margin-left': '0.8%'}),
+        dbc.Col(bal_container, className='pretty_container', width=8, style={"padding": "0% 1% 1% 1%", "margin-left": "1%"})
+    ], justify='start'),
+], style={'margin-top': '0.8%'})
 
 ar_1_container = html.Div([
     dbc.Row([
@@ -563,7 +566,7 @@ ar_2_container = html.Div(
 
                     dbc.Row([
                         dbc.Col(
-                            dbc.RadioItems(
+                            dcc.RadioItems(
                                 options=[
                                     {"label": "Águas Tratadas", "value": "Águas Tratadas"},
                                     {"label": "Total - Água Tratada", "value": "Total1"},
@@ -573,12 +576,14 @@ ar_2_container = html.Div(
                                     {"label": "Seleccionar Tudo", "value": "Todas"},
                                 ],
                                 # labelStyle={"margin-right": "0.5%"},
-                                switch=True,
+                                # switch=True,
                                 value="Personalizado",
                                 id="radio-ar",
-                                inline=True,
+                                # inline=True,
+                                labelStyle={'display': 'inline-block', 'margin-left': '4%'},
+
                             ),
-                            width=5, style={'font-family': family_generico}
+                            width=4, style={'font-family': family_generico}
 
                         ),
                         dbc.Col(
@@ -598,7 +603,7 @@ ar_2_container = html.Div(
 tab_residuais = html.Div([
 
         dbc.Row([
-            dbc.Col(side_bar_ar, className="pretty_container", width=3, style={'margin-top': '0.8%'}),
+            dbc.Col(side_bar_ar, className="pretty_container", width=3, style={'margin-top': '0.8%', 'margin-left': '0.8%'}),
 
 
 
@@ -610,7 +615,9 @@ tab_residuais = html.Div([
                 ]),
 
                 dbc.Row([
+                    dbc.Col([
                     ar_2_container
+                    ], width=12)
                 ])
 
             ], width=8, className="pretty_container", align="center",
@@ -1167,7 +1174,7 @@ def update_ano_line(drop_tipo, at, drop_cons):
     layout_ano_line['hoverlabel'] = dict(font=dict(family=layout['font']['family']))
 
     # layout_ano_line['title'] = dict(text=title, xref='paper', x=0.5)
-
+    layout_ano_line['showlegend'] = True
 
     fig.update_layout(layout_ano_line)
     fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF")
@@ -1254,9 +1261,23 @@ def update_timeseries(drop_bal):
         ))
         i += 1
 
+        layout_timeseries['legend'] = go.layout.Legend(
+            y=1,
+            x=0.5,
+            yanchor='bottom',
+            xanchor='right',
+            font=dict(
+                # size=13,
+                color="black"
+            ),
+            orientation='h',
+            bgcolor='rgba(0,0,0,0)',
+
+        )
+
     layout_timeseries['autosize'] = True
 
-    fig.update_layout(layout_timeseries)
+    fig.update_layout(layout_timeseries, showlegend=True)
 
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF")
@@ -1443,7 +1464,19 @@ def update_ar_timeseries(drop_ar, at):
             )
         )
         i += 1
+    layout_ar['legend'] = go.layout.Legend(
+        y=1,
+        x=0.5,
+        yanchor='bottom',
+        xanchor='right',
+        font=dict(
+            # size=13,
+            color="black"
+        ),
+        orientation='h',
+        bgcolor='rgba(0,0,0,0)',
 
+    )
 
     fig.update_layout(layout_ar)
     fig.update_layout(barmode='group', xaxis_tickangle=-45, showlegend=True)
