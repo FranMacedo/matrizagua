@@ -24,7 +24,7 @@ cl_scale_blues = [[0, '#c6dbf7'], [1, '#165bb8']]
 
 layout = dict(
     font=dict(
-        # size=13,
+        size=14,
         family="'Abel', sans-serif",
 ),
     hovermode="closest",
@@ -40,6 +40,7 @@ unidade_2 = "x10\u00b3 m\u00b3"
 
 
 file_path_freg = "data/Freguesias_agua_potavel.xlsx"
+# file_path_freg_dom = 'data/Freguesias_domestico_agua_potavel.xlsx'
 file_path_sector = "data/sector.xlsx"
 file_path_freg_center = 'data/freguesias_centro.csv'
 file_path_ndom = "data/nao_domestico.xlsx"
@@ -52,6 +53,8 @@ file_path_ar_reu = "data/ar_reutilizadas.xlsx"
 
 
 df_fregs = pd.read_excel(file_path_freg)
+# df_fregs_dom = pd.read_excel(file_path_freg_dom)
+
 freg_center = pd.read_csv(file_path_freg_center, encoding='utf-8')
 sector_df = pd.read_excel(file_path_sector, index_col='Ano')
 ndom_df = pd.read_excel(file_path_ndom, index_col='Ano')
@@ -60,6 +63,9 @@ bal_pot_ts_df = pd.read_excel(file_path_bal_potavel_ts, index_col='Ano')
 aguas_r_df = pd.read_excel(file_path_ar, index_col='Ano')
 ar_centro_df = pd.read_excel(file_path_ar_centro)
 ar_reu_df = pd.read_excel(file_path_ar_reu, index_col='Ano')
+perc_ndom = ((ndom_df['Total']/1000)/(sector_df['Total']-sector_df['Perdas económicas']))*100
+anos = sector_df.index.unique().tolist()
+
 
 
 max_sector_total = math.ceil(sector_df.iloc[:,:-1].max().max()/1000)
@@ -201,6 +207,31 @@ server = app.server
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
+collapse_side_cons = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-btn-cons",
+            size="lg",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody(
+                dcc.Markdown('''
+                _O consumo anual apresentado inclui também as **perdas económicas** (ou aparentes)._ 
+                
+                _Estas perdas resultam de consumos não autorizados, fornecimentos não medidos e erros de medição._
+                
+                '''),
+                id ='info-cons'),
+                     # style= {'font-style': 'italic'}
+                     ),
+            id="collapse-cons",
+        ),
+    ], style={'font-family': family_generico, 'margin-bottom':'2%'},
+)
 side_bar_cons = html.Div(
             [
                 html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
@@ -219,6 +250,7 @@ side_bar_cons = html.Div(
                     step=None,
                 )], style={'textAlign': "center", "margin-left": "7%", "margin-right": "5%", "padding": "2% 2%"}),
                 html.Hr(),
+                collapse_side_cons
 
             ]
 )
@@ -261,7 +293,25 @@ side_bar_ar = html.Div(
     ]
 )
 
-
+collapse_freg = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-btn-freg",
+            size="lg",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody(
+                id ='info-freg'),
+                     # style= {'font-style': 'italic'}
+                     ),
+            id="collapse-freg",
+        ),
+    ], style={'font-family': family_generico, 'margin-bottom':'2%'},
+)
 freg_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
@@ -282,10 +332,12 @@ freg_container = html.Div([
                 html.P("Filtrar informação por Freguesia:", style=INSTRUCTION_STYLE_center),
                 dcc.Dropdown(
                     id='drop-freg',
-                    options=[{'label': 'Consumo', 'value': 'consumo'},
-                             {'label': 'Contadores', 'value': 'contadores'},
-                             {'label': 'Smartmeters', 'value': 'smartmeters'}],
-                    value='consumo',
+                    options=[
+                        {'label': 'Consumo Total de Água Potável', 'value': 'consumo_total'},
+                        {'label': 'Consumo Doméstico de Água Potável', 'value': 'consumo_dom'},
+                        {'label': 'Contadores', 'value': 'contadores'},
+                        {'label': 'Smartmeters', 'value': 'smartmeters'}],
+                    value='consumo_total',
                     clearable=False,
                     style={'font-family': family_generico, 'margin-bottom': '2%'}
                 ),
@@ -305,48 +357,51 @@ freg_container = html.Div([
 
             dbc.Col([
 
-                dbc.Row([
-                    html.Div(dcc.Graph(id='bar-freguesias', config={'displayModeBar': False}), id="bar-freg-container", style={'margin-right': '99%'})
-                ])
+
+                    html.Div(dcc.Graph(id='bar-freguesias', config={'displayModeBar': False}), id="bar-freg-container")
+
             ], width=6
             ),
         ], align="center", justify="center"
-    )
+    ),
+    collapse_freg
 ], className='pretty_container twelve columns', style={"padding": "0% 1% 1% 1%", 'margin':'0'})
 
-collapse = html.Div(
+collapse_donut = html.Div(
     [
         dbc.Button(
             "+ Info",
-            id="collapse-button",
-            size="sm",
+            id="collapse-btn-donut",
+            size="lg",
             # className="mb-3",
             # outline=True,
             color="link",
         ),
         dbc.Collapse(
-            dbc.Card(dbc.CardBody("Mais Informações sobre este gráfico."), style= {'font-style': 'italic'}),
-            id="collapse",
+            dbc.Card(dbc.CardBody( id ='info-donut'),
+                     # style= {'font-style': 'italic'}
+                     ),
+            id="collapse-donut",
         ),
-    ], style={'font-family': family_generico},
+    ], style={'font-family': family_generico, 'margin-bottom':'2%'},
 )
 donut_container = html.Div(
                         [
                             # , tanks
                             html.H6(id="header-donut", style=TITLE_STYLE),
 
-                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}, style={'font-size':"20px"}),
-                            collapse,
+                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}),
+                            collapse_donut,
 
                          ],
                         )
 
-info_button = html.Div(
+info_button_consumo = html.Div(
     [
         html.I(className="fas fa-question-circle fa-sm", id="target"),
-        dbc.Tooltip("O consumo de água potável em Lisboa pode ser desagregado de várias formas. Nesta matriz, apresenta-se o consumo de água potável por sector de consumo e por consumo não doméstico.", target="target"),
+        dbc.Tooltip("O consumo de água potável em Lisboa pode ser desagregado de várias formas. Nesta matriz, apresenta-se o consumo de água potável por sector de consumo e por consumo não doméstico.", target="target", style={'font-size': '1.4rem'}),
     ],
-    className="p-5 text-muted"
+    className="p-2 text-muted"
 )
 
 ano_line_container = html.Div(
@@ -396,8 +451,8 @@ ano_line_container = html.Div(
 header_consumo = html.Div([
                             dbc.Row([
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button], align="center", justify="center", no_gutters=True), width=5, align="center"),
-                                # dbc.Col(info_button, width=1, style={'textAlign': 'right'}),
+                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo], align="center", justify="center", no_gutters=True), width=5, align="center"),
+                                # dbc.Col(info_button_consumo, width=1, style={'textAlign': 'right'}),
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                             ], justify="center"),
@@ -459,6 +514,34 @@ tab_consumo = html.Div(
                     ], style={'margin-top': '0.8%'}
 )
 
+
+collapse_bal = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-btn-bal",
+            size="lg",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody(
+                dcc.Markdown('''
+                _De toda a água potável entrada na cidade de Lisboa (Água para consumo humano) parte é entregue a outros municípios e a restante é utilizida na capital._ 
+                
+                _Da água utilizada na cidade, existem dois tipos de perdas principais:_
+                * _**Perdas físicas ou reais**: traduzem a água realmente perdida na sequência de fugas e/ou roturas na rede de distribuição; _
+                * _**Perdas aparentes ou económicas**: resultantes de consumos não autorizados, fornecimentos não medidos e erros de medição. _                
+                '''),
+                id ='info-bal'),
+                     # style= {'font-style': 'italic'}
+                     ),
+            id="collapse-bal",
+        ),
+    ], style={'font-family': family_generico, 'margin-bottom':'2%'},
+)
+
 bal_container = html.Div([
 
     dbc.Row(
@@ -480,11 +563,12 @@ bal_container = html.Div([
                            'originalLayer': 0, 'dx': 30, 'dy': 269.9999999999998, 'curveNumber': 0}]}, config={'displayModeBar': False},
                       # style={'width': 1000}
                       ),
+                collapse_bal,
+
                 html.Hr()
                 ]
         )
     ),
-
     dbc.Row(
         dbc.Col(
             [
@@ -540,25 +624,94 @@ tab_balanco = html.Div([
     ], justify='start'),
 ], style={'margin-top': '0.8%'})
 
+collapse_ar = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-btn-ar",
+            size="lg",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody(
+
+                id='info-ar'),
+                # style= {'font-style': 'italic'}
+            ),
+            id="collapse-ar",
+        ),
+    ], style={'font-family': family_generico, 'margin-bottom': '2%'},
+)
+info_button_ar = html.Div(
+    [
+        html.I(className="fas fa-question-circle fa-sm", id="target_ar"),
+        dbc.Tooltip("A água residual do Concelho de Lisboa é tratada pelos Subsistemas de Alcântara, Beirolas, Chelas e Frielas. "
+                    "Estas estações recebem também afluentes provenientes de outros concelhos vizinhos (Amadora, Loures, Odivelas, Oeiras, Sintra e Vila Franca de Xira). "
+                    "Não se apresenta aqui a ETAR de Frielas pois esta não faz parte do Concelho de Lisboa.", target="target_ar",
+                    style={'font-size': '1.4rem'}),
+    ],
+    className="p-2 text-muted"
+)
+
+
 ar_1_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-        dbc.Col(html.H6(id="header-bar-ar", style=TITLE_STYLE), width=7, align='center'),
+        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar], align="center", justify="center", no_gutters=True), width=7, align='center'),
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
     ], justify='center'),
 
     dbc.Row([
         dbc.Col(dcc.Graph(id='bar-ar', config={'displayModeBar': False}), width=6),
         dbc.Col(dcc.Graph(id='map-ar', config={'displayModeBar': False}), width=6)
-    ], justify='center')
+    ], justify='center'),
+    collapse_ar,
+
 ])
 
 
+info_button_ar_2 = html.Div(
+    [
+        html.I(className="fas fa-question-circle fa-sm", id="target_ar2"),
+        dbc.Tooltip("A Águas do Tejo Atlântico (AdTA) é a entidade que recolhe e trata as águas residuais de Lisboa, "
+                    "promove a sua reutilização dentro das próprias ETAR e fornece parte dessa água às Juntas de Freguesia e à Câmara Municipal de Lisboa.", target="target_ar2",
+                    style={'font-size': '1.4rem'}),
+    ],
+    className="p-2 text-muted"
+)
+collapse_ar_2 = html.Div(
+    [
+        dbc.Button(
+            "+ Info",
+            id="collapse-btn-ar2",
+            size="lg",
+            # className="mb-3",
+            # outline=True,
+            color="link",
+        ),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody(
+                dcc.Markdown('''
+                _Atendendo à tipologia de ocupação urbana, os potenciais usos identificados para a reutilização na área de concessão da AdTA são os seguintes:_
+                * _irrigação na agricultura, para rega de diferentes tipos de culturas em campo aberto ou em estufas;_
+                * _irrigação paisagística, para jardins, parques, campos de golfe, áreas residenciais e comerciais e, de um modo geral, em áreas verdes;_
+                * _reutilização na indústria, para circuitos de arrefecimento, caldeiras, água de processo e construção civil;_
+                * _usos urbanos não potáveis, para a proteção contra incêndios, limpeza de ruas e sanitários e aparelhos de ar condicionado._
+                '''),
 
+                id='info-ar2'),
+                # style= {'font-style': 'italic'}
+            ),
+            id="collapse-ar2",
+        ),
+    ], style={'font-family': family_generico, 'margin-bottom': '2%'},
+)
 ar_2_container = html.Div(
                 [   dbc.Row([
                     dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                    dbc.Col(html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), width=6, align="center"),
+                    dbc.Col(dbc.Row([html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), info_button_ar_2], align="center", justify="center", no_gutters=True), width=6, align="center"),
                     dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                 ], justify='center'),
@@ -598,6 +751,7 @@ ar_2_container = html.Div(
                         ),
                     ], justify='center', align="start", no_gutters=True),
                     dbc.Col(dcc.Graph(id='ar-timeseries', config={'displayModeBar': False}), width=12),
+                    collapse_ar_2
                 ], style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"})
 
 tab_residuais = html.Div([
@@ -698,6 +852,7 @@ def create_ano_bar_graph(df, ano_select):
 
     layout_ano_bar['dragmode'] = 'select'
 
+
     fig.update_layout(layout_ano_bar)
     # fig.update_layout(height=350)
     fig.update_yaxes(automargin=True, range=[0, max(df['Total']) * 1.15],
@@ -729,7 +884,6 @@ def update_ano_bar_cons(ano_select, at):
     Output("ano-bar-graph-bal", "figure"),
     [Input("year-slider-bal", "value"),
      Input('multi-tabs', 'active_tab')
-
      ]
 )
 def update_ano_bar_bal(ano_select, at):
@@ -764,6 +918,7 @@ def update_ano_bar_ar(ano_select, at):
 
 @app.callback(
     [
+        Output('info-freg', 'children'),
         Output('drop-freg-container', 'style'),
         Output('header-freg', 'children'),
         Output('bar-freg-container', 'style'),
@@ -781,28 +936,59 @@ def update_bar_freguesias(ano_select, drop_select, at):
 
     if ano_select < 2017:
         # text_alert = "Ausência de dados para {}".format(str(ano_select))
-        return {'visibility': 'hidden'}, None, {'visibility': 'hidden'}, {}
+        return None, {'visibility': 'hidden'}, None, {'visibility': 'hidden'}, {}
 
     df = df_fregs[df_fregs['Ano'] == ano_select]
 
-    if drop_select == 'consumo':
-        df = df.sort_values('Consumo')
-        values = df['Consumo']
+
+    if drop_select == 'consumo_dom':
+        df = df.sort_values('Consumo_dom')
+        values = df['Consumo_dom']
         my_text_show = ['{:.2f}'.format(cons / 1000000) + unidade_1 for cons in list(values)]
+
+        text_hover = ['<span style="font-weight:bold">Freguesia: ' + '{}'.format(freguesias) + '</span>' +
+                      '<br>Consumo Doméstico: ' + '{:.2f}'.format(cons / 1000000) + unidade_1
+                      for freguesias, cons in
+                      zip(list(df['Freguesias']), values)]
+
+        title_1 = "Consumo Doméstico de Água Potável, "
+
+    elif drop_select == 'consumo_total':
+        df = df.sort_values('Consumo_total')
+        values = df['Consumo_total']
+        my_text_show = ['{:.2f}'.format(cons / 1000000) + unidade_1 for cons in list(values)]
+
+        text_hover = ['<span style="font-weight:bold">Freguesia: ' + '{}'.format(freguesias) + '</span>' +
+                      '<br>Consumo Total: ' + '{:.2f}'.format(cons / 1000000) + unidade_1
+                      for freguesias, cons in
+                      zip(list(df['Freguesias']), values)]
+
         title_1 = "Consumo de Água Potável, "
 
     elif drop_select == "contadores":
         df = df.sort_values('N_contadores')
         values = df['N_contadores']
         my_text_show = list(values)
+
+        text_hover = ['<span style="font-weight:bold">Freguesia: ' + '{}'.format(freguesias) + '</span>' +
+                      '<br>Nº contadores: ' + '{}'.format(cont)
+                      for freguesias, cont in
+                      zip(list(df['Freguesias']), values)]
         title_1 = "Número de Contadores, "
 
     else:
         df = df.sort_values('N_smartmeters')
         values = df['N_smartmeters']
         my_text_show = list(values)
+
+        text_hover = ['<span style="font-weight:bold">Freguesia: ' + '{}'.format(freguesias) + '</span>' +
+                      '<br>Nº smartmeters: ' + '{}'.format(smart)
+                      for freguesias, smart in
+                      zip(list(df['Freguesias']), values)]
+
         title_1 = "Número de Smartmeters, "
 
+    # values = values/sum(values)
 
     fig = go.Figure(data=[go.Bar(
         x=values,
@@ -813,6 +999,8 @@ def update_bar_freguesias(ano_select, drop_select, at):
         opacity=0.8,
         marker_line_width=1.5,
         text=my_text_show,
+        hovertext=text_hover,
+        hoverlabel=dict(font=layout['font']),
         hoverinfo='text',
         textposition='outside'
 
@@ -825,11 +1013,18 @@ def update_bar_freguesias(ano_select, drop_select, at):
 
     layout_freg['hovermode'] = "y"
     fig.update_xaxes(showticklabels=False, range=[0,values.max()*1.2])
+    # fig.update_xaxes(showticklabels=False)
 
     fig.update_layout(layout_freg)
 
     title_bar = title_1 + "por Freguesia, em {}".format(ano_select)
-    return {'visibility': 'visible'}, title_bar, {'visibility': 'visible'},  fig
+
+    text_freg = dcc.Markdown('''
+        No ano {0} estavam instalados pela EPAL **{1}** smartmeters em comparação com o número total de contadores, **{2}**, o que equivale a cerca de **{3}%**.
+        
+    
+    '''.format(ano_select, df.N_smartmeters.sum(), df.N_smartmeters.sum()+df.N_contadores.sum(), round(df.N_smartmeters.sum()/(df.N_smartmeters.sum()+df.N_contadores.sum())*100)))
+    return text_freg, {'visibility': 'visible'}, title_bar, {'visibility': 'visible'},  fig
 
 
 
@@ -852,15 +1047,27 @@ def update_mapa_freguesias(ano_select, drop_select, at):
         text_alert = "Ausência de dados para {}".format(str(ano_select))
         return {'visibility': 'hidden'}, text_alert, True, {}
 
+
     df = df_fregs.loc[df_fregs['Ano'] == ano_select].copy()
     df['id'] = list(range(1,len(df)+1))
     df['id'] = [str(i).zfill(2) for i in df['id']]
 
-    consumo_simp = list(df['Consumo'])
-    consumo_simp = [(c/1000000) for c in consumo_simp]
+    consumo_simp_dom = list(df['Consumo_dom'])
+    consumo_simp_dom = [(c / 1000000) for c in consumo_simp_dom]
 
-    if drop_select == 'consumo':
-        values = consumo_simp
+    consumo_simp_total = list(df['Consumo_total'])
+    consumo_simp_total = [(c / 1000000) for c in consumo_simp_total]
+
+    if drop_select == 'consumo_dom':
+
+        values = consumo_simp_dom
+        text_scatter = [str(round(cons,2)) + unidade_1 for cons in values]
+        title_bar = unidade_1
+        cl_scale = cl_scale_blues
+
+    elif drop_select == 'consumo_total':
+
+        values = consumo_simp_total
         text_scatter = [str(round(cons,2)) + unidade_1 for cons in values]
         title_bar = unidade_1
         cl_scale = cl_scale_blues
@@ -883,11 +1090,12 @@ def update_mapa_freguesias(ano_select, drop_select, at):
 
     text_hover = ['<span style="font-weight:bold">Freguesia: ' + '{}'.format(freguesias) + '</span>' +
                      '<br>Ano: ' + '{}'.format(ano_select) +
-                     "<br>Consumo: " + '{:.2f}'.format(consumo) + unidade_1 +
+                     "<br>Consumo Total: " + '{:.2f}'.format(consumo_tot) + unidade_1 +
+                     "<br>Consumo Doméstico: " + '{:.2f}'.format(consumo_dom) + unidade_1 +
                      '<br>Nº contadores: ' + '{:.0f}'.format(contador) +
                      '<br>Nº smartmeters: ' + '{:.0f}'.format(smartmeter)
-                     for freguesias, consumo, contador, smartmeter in
-                     zip(list(df['Freguesias']), consumo_simp, list(df['N_contadores']),
+                     for freguesias, consumo_tot, consumo_dom, contador, smartmeter in
+                     zip(list(df['Freguesias']), consumo_simp_total,consumo_simp_dom, list(df['N_contadores']),
                          list(df['N_smartmeters']))]
 
     data_trace_1 = go.Choroplethmapbox(
@@ -937,21 +1145,105 @@ def update_mapa_freguesias(ano_select, drop_select, at):
     return {'visibility': 'visible'}, None, False, fig
 
 
+def collapse_template(n, is_open):
+    if n:
+        b = not is_open
+        if is_open:
+            return '+ info', b
+        else:
+            return '- info', b
+    return '+ info', is_open
 
 @app.callback(
-    Output("collapse", "is_open"),
     [
-     Input("collapse-button", "n_clicks"),
+    Output("collapse-btn-bal", "children"),
+    Output("collapse-bal", "is_open"),
+    ],
+    [
+     Input("collapse-btn-bal", "n_clicks"),
      ],
-    [State("collapse", "is_open")],
+    [State("collapse-bal", "is_open")],
+)
+def toggle_collapse_bal(n, is_open):
+
+    return collapse_template(n, is_open)
+
+
+@app.callback(
+    [
+    Output("collapse-btn-ar2", "children"),
+    Output("collapse-ar2", "is_open"),
+    ],
+    [
+     Input("collapse-btn-ar2", "n_clicks"),
+     ],
+    [State("collapse-ar2", "is_open")],
+)
+def toggle_collapse_ar2(n, is_open):
+
+    return collapse_template(n, is_open)
+
+
+@app.callback(
+    [
+    Output("collapse-btn-ar", "children"),
+    Output("collapse-ar", "is_open"),
+    ],
+    [
+     Input("collapse-btn-ar", "n_clicks"),
+     ],
+    [State("collapse-ar", "is_open")],
+)
+def toggle_collapse_ar(n, is_open):
+
+    return collapse_template(n, is_open)
+
+
+@app.callback(
+    [
+    Output("collapse-btn-cons", "children"),
+    Output("collapse-cons", "is_open"),
+    ],
+    [
+     Input("collapse-btn-cons", "n_clicks"),
+     ],
+    [State("collapse-cons", "is_open")],
+)
+def toggle_collapse_cons(n, is_open):
+
+    return collapse_template(n, is_open)
+
+@app.callback(
+    [
+    Output("collapse-btn-freg", "children"),
+    Output("collapse-freg", "is_open"),
+    ],
+    [
+     Input("collapse-btn-freg", "n_clicks"),
+     ],
+    [State("collapse-freg", "is_open")],
+)
+def toggle_collapse_freg(n, is_open):
+
+    return collapse_template(n, is_open)
+
+@app.callback(
+    [
+    Output("collapse-btn-donut", "children"),
+    Output("collapse-donut", "is_open"),
+    ],
+    [
+     Input("collapse-btn-donut", "n_clicks"),
+     ],
+    [State("collapse-donut", "is_open")],
 )
 def toggle_collapse_donut(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+
+    return collapse_template(n, is_open)
 
 @app.callback(
-    [Output('donut-sector', 'figure'),
+    [Output('info-donut', 'children'),
+     Output('donut-sector', 'figure'),
      Output('header-donut', 'children')],
     [Input('year-slider', 'value'),
      Input('drop-cons', 'value'),
@@ -983,6 +1275,11 @@ def update_donut(ano_select, drop_cons):
                                      opacity=0.8,
                                      sort=False)])
         title_donut = "Consumo por Sector de Consumo, em {}".format(ano_select)
+        text_info = dcc.Markdown('''
+        _Deste o ano de 2014, na sequência da reorganização administrativa 
+        da cidade de Lisboa, houve transferência da titularidade de contratos da CML (Câmara Municipal de Lisboa)
+         para as Juntas de Freguesia, designados de Delegação CML, o que causou o aumento dos consumos das Juntas._
+         ''')
 
 
     elif drop_cons == "ndom":
@@ -1018,6 +1315,34 @@ def update_donut(ano_select, drop_cons):
         )])
         fig.update_xaxes(title_text="Milhões de {}".format(unidade))
         title_donut = "Consumo Não Doméstico , em {}".format(ano_select)
+        percentagem = round(perc_ndom[ano_select],1)
+        text_info = dcc.Markdown('''
+        * _O consumo não doméstico na cidade de Lisboa em **{0}** representa **{1}%** do consumo total na cidade (excluindo as perdas económicas)._ 
+        * _O **Consumo Habitacional** diz respeito a consumos de alojamento em habitações municipais, 
+         consumos de água nas residências de estudantes e consumos nos domicílios de embaixadores. 
+         Ou seja, apesar dos contratos serem feitos com empresas ou entidades públicas, a água 
+         é utilizada para fins habitacionais._
+         * _A categoria **Outros** refere-se aos consumos de água destinados a atividades desportivas, 
+         Lares e Centros de dia/Recolhimento, Estabelecimentos prisionais, etc._
+         '''.format(ano_select, percentagem))
+        pos_annot = [[0.09, 0.076], [0.092, 0.076], [0.11, 0.076], [0.168, 0.076], [0.205, 0.076], [0.2222,0.27]]
+
+        # layout_donut['annotations'] = [
+        #     go.layout.Annotation(
+        #         x=pos_annot[anos.index(ano_select)][0],
+        #         y=pos_annot[anos.index(ano_select)][1],
+        #         xref="paper",
+        #         yref="paper",
+        #         text="Contratos de entidades públicas (ver <i>+INFO</i> )",
+        #         showarrow=True,
+        #         arrowhead=7,
+        #         ax= 300,
+        #         ay=-10,
+        #         font=dict(color='#667073'),
+        #
+        #         arrowcolor='#667073'
+        #     )
+        # ]
 
     layout_donut['legend'] = go.layout.Legend(
 
@@ -1037,7 +1362,7 @@ def update_donut(ano_select, drop_cons):
     fig.update_layout(layout_donut)
     fig.update_yaxes(showticklabels=False, showgrid=False)
 
-    return fig, title_donut
+    return text_info, fig, title_donut
 
 @app.callback(
     [Output('drop-ano-line', 'options'),
@@ -1488,6 +1813,7 @@ def update_ar_timeseries(drop_ar, at):
 
 @app.callback(
     [Output('bar-ar', 'figure'),
+     Output('info-ar', 'children'),
      Output('header-bar-ar', 'children')],
     [Input('year-slider-ar', 'value'),
      Input('multi-tabs', 'active_tab')
@@ -1556,8 +1882,26 @@ def update_bar_ar(ano_select, at):
                      autorange=False, fixedrange=True, showticklabels=False, title_text="Milhões de {}".format(unidade))
 
     # fig.show()
+    alcantara_perc = round(df.loc[df.Subsistema=='Alcântara', 'Total']/df['Total'].sum()*100,1).values[0]
+    beirolas_perc = round(df.loc[df.Subsistema=='Beirolas', 'Total']/df['Total'].sum()*100,1).values[0]
+    chelas_perc = round(df.loc[df.Subsistema=='Chelas', 'Total']/df['Total'].sum()*100,1).values[0]
+
     title = "Águas Residuais (AR) Tratadas, nas ETAR de Lisboa, em {0} ({1})".format(ano_select, unidade)
-    return fig, title
+
+    text_chelas = "ETAR de Chelas ({}%, que apenas trata das águas residuais **produzidas** em Lisboa)".format(chelas_perc)
+    texto_beirolas = "ETAR de Beirolas ({}%)".format(beirolas_perc)
+
+    if beirolas_perc>chelas_perc:
+        text_1 = texto_beirolas
+        text_2 = text_chelas
+    else:
+        text_2 = texto_beirolas
+        text_1 = text_chelas
+    texto_col = dcc.Markdown('''
+    _Em {0}, a ETAR de Alcântara foi responsável pelo tratamento e encaminhamento de {1}% das águas residuais **tratadas** em Lisboa, seguindo-se a {2} e a {3}._
+                '''.format(ano_select, alcantara_perc, text_1, text_2))
+
+    return fig, texto_col,  title
 
 
 
@@ -1640,4 +1984,5 @@ def update_map_ar(ano_select, at):
 
 
 if __name__ == '__main__':
+    # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
     app.run_server(debug=True)
