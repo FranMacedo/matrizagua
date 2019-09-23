@@ -313,11 +313,29 @@ collapse_freg = html.Div(
         ),
     ], style={'font-family': family_generico, 'margin-bottom':'2%'},
 )
+
+
+download_button_freg = html.Div(
+    [
+    html.A(
+        children=html.I(
+            className="fas fa-file-download fa-lg",
+            id="target-freg",
+        ),
+        href='/download/Consumo_Freguesias.xlsx',
+        id='link-file'
+    ),
+    dbc.Tooltip(
+        "Download dos Consumos de água potável (doméstico e total), número de contadores e número de smartmeters, por freguesia (.xlsx).",
+        target="target-freg", style={'font-size': '1.4rem'}),
+        ],
+    className="p-2 text-muted")
+
 freg_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
         dbc.Col([
-                 html.H6(id="header-freg", style=TITLE_STYLE),
+                 dbc.Row([html.H6(id="header-freg", style=TITLE_STYLE), download_button_freg], align="center", justify="center", no_gutters=True),
                  dbc.Alert(
                      color="danger",
                      id='alert-map',
@@ -448,16 +466,43 @@ ano_line_container = html.Div(
                          ],
                         )
 
+download_button_consumo = html.Div(
+    [
+    html.A(
+        children=html.I(
+            className="fas fa-file-download fa-lg",
+            id="target-consumo",
+        ),
+        href='/download/Consumo_AguaPotavel.xlsx',
+        id='link-file'
+    ),
+    dbc.Tooltip(
+        "Download do Consumo de água potável, por sector e por consumo não doméstico (.xlsx).",
+        target="target-consumo", style={'font-size': '1.4rem'}),
+        ],
+
+    className="p-2 text-muted")
 
 header_consumo = html.Div([
                             dbc.Row([
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo], align="center", justify="center", no_gutters=True), width=5, align="center"),
-                                # dbc.Col(info_button_consumo, width=1, style={'textAlign': 'right'}),
+                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo, download_button_consumo], align="center", justify="center", no_gutters=True), width=6, align="center"),
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                             ], justify="center"),
-
+                            # dbc.Row(
+                            #     dbc.Col(
+                            #
+                            #         # html.P('as'),
+                            #         html.A(children="Download destes dados (.xlsx)",
+                            #                href='/download/Consumo_AguaPotavel.xlsx',
+                            #                id='link-file'
+                            #                ),
+                            #         width=2, align='center'
+                            #     ),
+                            #     align='center',
+                            #     justify='center'
+                            # ),
 
                             dbc.Row([
                                 # dbc.Col([html.Div(className='vl', style={'height': 'inherit'})]),
@@ -543,6 +588,24 @@ collapse_bal = html.Div(
     ], style={'font-family': family_generico, 'margin-bottom':'2%'},
 )
 
+download_button_balanco = html.Div(
+    [
+    html.A(
+        children=html.I(
+            className="fas fa-file-download fa-lg",
+            id="target-bal",
+        ),
+        href='/download/Balanco_Agua_Potavel.xlsx',
+        id='link-file'
+    ),
+    dbc.Tooltip(
+        "Download do balanço de água potável em Lisboa (.xlsx).",
+        target="target-bal", style={'font-size': '1.4rem'}),
+        ],
+
+    className="p-2 text-muted")
+
+
 bal_container = html.Div([
 
     dbc.Row(
@@ -552,7 +615,7 @@ bal_container = html.Div([
                     [
                         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
-                        dbc.Col(html.H6(id='bal-header', style=TITLE_STYLE), width=6, align='center'),
+                        dbc.Col(dbc.Row([html.H6(id='bal-header', style=TITLE_STYLE), download_button_balanco], align='center', justify='center', no_gutters=True), width=6, align='center'),
                         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                     ], align="center", justify="center"),
@@ -655,12 +718,27 @@ info_button_ar = html.Div(
     ],
     className="p-2 text-muted"
 )
+download_button_ar = html.Div(
+    [
+    html.A(
+        children=html.I(
+            className="fas fa-file-download fa-lg",
+            id="target-ar",
+        ),
+        href='/download/Aguas_Residuais_e_Reutilizadas.xlsx',
+        id='link-file'
+    ),
+    dbc.Tooltip(
+        "Download das águas residuais tratadas e reutilizadas em Lisboa (.xlsx).",
+        target="target-ar", style={'font-size': '1.4rem'}),
+        ],
 
+    className="p-2 text-muted")
 
 ar_1_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar], align="center", justify="center", no_gutters=True), width=7, align='center'),
+        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar, download_button_ar], align="center", justify="center", no_gutters=True), width=7, align='center'),
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
     ], justify='center'),
 
@@ -798,15 +876,14 @@ tabs = dbc.Tabs(
     style={"margin-left": "0%"}
     # style={"position": "fixed", "z-index": "1"}
 )
-dwnld_path = "data"
+
 @server.route("/download/<path:path>")
 def download(path):
     """Serve a file from the upload directory."""
-    return send_from_directory(dwnld_path, path, as_attachment=True)
+    return send_from_directory("data", path, as_attachment=True)
 
 app.layout = html.Div([
-    html.Ul(id="file-list",
-            children=html.Li(html.A(children=201812, href='/download/aguas_residuais.xlsx', id='link-file'))),
+    # html.Ul(children=html.Li(html.A(children=201812, href='/download/aguas_residuais.xlsx', id='link-file'))),
     tabs,
     html.Div(id='tabs-content'),
 
@@ -823,24 +900,24 @@ def render_content(tab):
     elif tab == 'tab-residuais':
         return tab_residuais
 
-@app.callback(
-    [
-    Output("link-file", "children"),
-    Output("link-file", "href"),
-    ],
-    [
-     Input('multi-tabs', 'active_tab')
-
-    ],
-)
-def change_files(at):
-    nome = 'Download Excel'
-    if at == 'tab-consumo':
-        return nome, '/download/sector.xlsx'
-    elif at == 'tab-residuais':
-        return nome, '/download/aguas_residuais.xlsx'
-    else:
-        return nome, '/download/Balanco_potavel.xlsx'
+# @app.callback(
+#     [
+#     Output("link-file", "children"),
+#     Output("link-file", "href"),
+#     ],
+#     [
+#      Input('multi-tabs', 'active_tab')
+#
+#     ],
+# )
+# def change_files(at):
+#     nome = 'Download Excel'
+#     if at == 'tab-consumo':
+#         return nome, '/download/sector.xlsx'
+#     elif at == 'tab-residuais':
+#         return nome, '/download/aguas_residuais.xlsx'
+#     else:
+#         return nome, '/download/Balanco_potavel.xlsx'
 
 
 def create_ano_bar_graph(df, ano_select):
@@ -2015,4 +2092,4 @@ def update_map_ar(ano_select, at):
 if __name__ == '__main__':
     # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
     app.run_server(debug=True)
-#     app.run_server(port=8080)
+    # app.run_server(port=8080)
