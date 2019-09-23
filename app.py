@@ -1449,7 +1449,7 @@ def update_ano_line(drop_tipo, at, drop_cons):
 
 
     for trace in lista_index:
-        my_text = [trace + ': ' + '{:.0f}'.format(tr) + ' | ' + unidade_1 + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
+        my_text = [trace + ': ' + '{:.1f}'.format(tr) + ' | ' + unidade_1 + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
 
         df_trace = df[[trace]]
         if False in (df_trace.T != 0).any().tolist():
@@ -1985,4 +1985,5 @@ def update_map_ar(ano_select, at):
 
 if __name__ == '__main__':
     # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
-    app.run_server(debug=True)
+    # app.run_server(debug=True)
+    app.run_server(port=8080)
