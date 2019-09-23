@@ -10,7 +10,6 @@ import dash_bootstrap_components as dbc
 import json
 import math
 import numpy as np
-from flask import Flask, send_from_directory
 
 
 
@@ -798,18 +797,10 @@ tabs = dbc.Tabs(
     style={"margin-left": "0%"}
     # style={"position": "fixed", "z-index": "1"}
 )
-dwnld_path = "C:\\Users\\Vasco Abreu - PC\\Documents\\Python Projects\\Matriz_Agua\\data"
-@server.route("/download/<path:path>")
-def download(path):
-    """Serve a file from the upload directory."""
-    return send_from_directory(dwnld_path, path, as_attachment=True)
 
 app.layout = html.Div([
-    html.Ul(id="file-list",
-            children=html.Li(html.A(children=201812, href='/download/aguas_residuais.xlsx', id='link-file'))),
     tabs,
-    html.Div(id='tabs-content'),
-
+    html.Div(id='tabs-content')
 ])
 
 
@@ -822,26 +813,6 @@ def render_content(tab):
         return tab_balanco
     elif tab == 'tab-residuais':
         return tab_residuais
-
-@app.callback(
-    [
-    Output("link-file", "children"),
-    Output("link-file", "href"),
-    ],
-    [
-     Input('multi-tabs', 'active_tab')
-
-    ],
-)
-def change_files(at):
-    nome = 'Download Excel'
-    if at == 'tab-consumo':
-        return nome, '/download/sector.xlsx'
-    elif at == 'tab-residuais':
-        return nome, '/download/aguas_residuais.xlsx'
-    else:
-        return nome, '/download/Balanco_potavel.xlsx'
-
 
 def create_ano_bar_graph(df, ano_select):
     """
@@ -2014,5 +1985,5 @@ def update_map_ar(ano_select, at):
 
 if __name__ == '__main__':
     # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
-    # app.run_server(debug=True)
-    app.run_server(port=8080)
+    app.run_server(debug=True)
+#     app.run_server(port=8080)
