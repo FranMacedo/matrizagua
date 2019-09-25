@@ -203,7 +203,7 @@ FONT_AWESOME = "https://use.fontawesome.com/releases/v5.10.2/css/all.css"
 external_stylesheets = [dbc.themes.BOOTSTRAP, FONT_AWESOME]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app.config['suppress_callback_exceptions']=True
+app.config['suppress_callback_exceptions'] = True
 server = app.server
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
@@ -215,7 +215,7 @@ collapse_side_cons = html.Div(
             id="collapse-btn-cons",
             size="lg",
             # className="mb-3",
-            # outline=True,
+            outline=True,
             color="link",
         ),
         dbc.Collapse(
@@ -883,7 +883,6 @@ def download(path):
     return send_from_directory("data", path, as_attachment=True)
 
 app.layout = html.Div([
-    # html.Ul(children=html.Li(html.A(children=201812, href='/download/aguas_residuais.xlsx', id='link-file'))),
     tabs,
     html.Div(id='tabs-content'),
 
@@ -899,25 +898,6 @@ def render_content(tab):
         return tab_balanco
     elif tab == 'tab-residuais':
         return tab_residuais
-
-# @app.callback(
-#     [
-#     Output("link-file", "children"),
-#     Output("link-file", "href"),
-#     ],
-#     [
-#      Input('multi-tabs', 'active_tab')
-#
-#     ],
-# )
-# def change_files(at):
-#     nome = 'Download Excel'
-#     if at == 'tab-consumo':
-#         return nome, '/download/sector.xlsx'
-#     elif at == 'tab-residuais':
-#         return nome, '/download/aguas_residuais.xlsx'
-#     else:
-#         return nome, '/download/Balanco_potavel.xlsx'
 
 
 def create_ano_bar_graph(df, ano_select):
