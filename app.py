@@ -203,6 +203,7 @@ FONT_AWESOME = "https://use.fontawesome.com/releases/v5.10.2/css/all.css"
 external_stylesheets = [dbc.themes.BOOTSTRAP, FONT_AWESOME]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# para prevenir erros
 app.config['suppress_callback_exceptions'] = True
 server = app.server
 app.css.config.serve_locally = True
@@ -329,14 +330,15 @@ download_button_freg = html.Div(
         "Download dos Consumos de água potável (doméstico e total), número de contadores e número de smartmeters, por freguesia (.xlsx).",
         target="target-freg", style={'font-size': '1.4rem'}),
         ],
-    className="p-2 text-muted")
+    className="p-3 text-muted")
 
 freg_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
         dbc.Col([
-                 dbc.Row([html.H6(id="header-freg", style=TITLE_STYLE), download_button_freg], align="center", justify="center", no_gutters=True),
-                 dbc.Alert(
+            html.Div([dbc.Row([html.H6(id="header-freg", style=TITLE_STYLE), download_button_freg], align="center",
+                              justify="center", no_gutters=True)], id='freg-title-geral'),
+            dbc.Alert(
                      color="danger",
                      id='alert-map',
                      is_open=False,
@@ -603,7 +605,7 @@ download_button_balanco = html.Div(
         target="target-bal", style={'font-size': '1.4rem'}),
         ],
 
-    className="p-2 text-muted")
+    className="p-3 text-muted")
 
 
 bal_container = html.Div([
@@ -684,7 +686,7 @@ bal_container = html.Div([
 tab_balanco = html.Div([
     dbc.Row([
         dbc.Col(html.Div(side_bar_bal, style={'textAlign': 'center'}), className='pretty_container', width=3, style={'textAlign': 'left', 'margin-left': '0.8%'}),
-        dbc.Col(bal_container, className='pretty_container', width=8, style={"padding": "0% 1% 1% 1%", "margin-left": "1%"})
+        dbc.Col(bal_container, className='pretty_container eight columns', style={"padding": "0% 1% 1% 1%", "margin-left": "1%"})
     ], justify='start'),
 ], style={'margin-top': '0.8%'})
 
@@ -853,7 +855,7 @@ tab_residuais = html.Div([
                     ], width=12)
                 ])
 
-            ], width=8, className="pretty_container", align="center",
+            ], className="pretty_container eight columns", align="center",
                 style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"}),
 
 ])
@@ -1112,14 +1114,16 @@ def update_bar_freguesias(ano_select, drop_select, at):
     '''.format(ano_select, df.N_smartmeters.sum(), df.N_smartmeters.sum()+df.N_contadores.sum(), round(df.N_smartmeters.sum()/(df.N_smartmeters.sum()+df.N_contadores.sum())*100)))
     return text_freg, {'visibility': 'visible'}, title_bar, {'visibility': 'visible'},  fig
 
-
+#
 
 @app.callback(
 
-    [Output('map-freg-container', 'style'),
+    [
+     Output('freg-title-geral', 'style'),
+     Output('map-freg-container', 'style'),
      Output('alert-map', 'children'),
-    Output('alert-map', 'is_open'),
-    Output('mapa-freguesias', 'figure')],
+     Output('alert-map', 'is_open'),
+     Output('mapa-freguesias', 'figure')],
     [Input('year-slider', 'value'),
      Input('drop-freg', 'value'),
      Input('multi-tabs', 'active_tab')
@@ -1131,7 +1135,7 @@ def update_mapa_freguesias(ano_select, drop_select, at):
 
     if ano_select < 2017:
         text_alert = "Ausência de dados para {}".format(str(ano_select))
-        return {'visibility': 'hidden'}, text_alert, True, {}
+        return {'visibility': 'hidden'}, {'visibility': 'hidden'}, text_alert, True, {}
 
 
     df = df_fregs.loc[df_fregs['Ano'] == ano_select].copy()
@@ -1228,7 +1232,7 @@ def update_mapa_freguesias(ano_select, drop_select, at):
     fig = go.Figure(data=[data_trace_1], layout=layout_map)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     # fig.show()
-    return {'visibility': 'visible'}, None, False, fig
+    return {'visibility': 'visible'}, {'visibility': 'visible'}, None, False, fig
 
 
 def collapse_template(n, is_open):
@@ -2070,6 +2074,6 @@ def update_map_ar(ano_select, at):
 
 
 if __name__ == '__main__':
-    # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
-    app.run_server(debug=True)
+    app.run_server(debug=False, port = 5000, host ='0.0.0.0')
+    # app.run_server(debug=True)
     # app.run_server(port=8080)
