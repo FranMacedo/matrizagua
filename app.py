@@ -216,7 +216,7 @@ collapse_side_cons = html.Div(
             id="collapse-btn-cons",
             size="lg",
             # className="mb-3",
-            outline=True,
+#             outline=True,
             color="link",
         ),
         dbc.Collapse(
