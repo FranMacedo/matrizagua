@@ -209,6 +209,96 @@ server = app.server
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
+
+# radioitems_modal = dbc.FormGroup(
+#     [
+#
+#     ]
+# )
+
+# dwnld_btn = html.Div([
+#
+# ])
+
+nomes = ['consumo', 'freg', 'ar', 'bal']
+headers = ['CONSUMO DE ÁGUA POTÁVEL', 'CONSUMO DE ÁGUA POTÁVEL POR FREGUESIA', 'ÁGUAS RESIDUAIS', 'BALANÇO DE ÁGUA']
+id_m = ['modal-consumo', 'modal-freg', 'modal-ar', 'modal-bal']
+id_l = ['link-file-consumo', 'link-file-freg', 'link-file-ar', 'link-file-bal']
+id_c = ['close-consumo', 'close-freg', 'close-ar', 'close-bal']
+id_d = ['download-consumo', 'download-freg', 'download-ar', 'download-bal']
+id_r = ['radio-consumo', 'radio-freg', 'radio-ar', 'radio-bal']
+id_t = ['target-consumo', 'target-freg', 'target-ar', 'target-bal']
+links = ['/download/Consumo_AguaPotavel.xlsx', '/download/Consumo_Freguesias.xlsx', '/download/Aguas_Residuais_e_Reutilizadas.xlsx', '/download/Balanco_Agua_Potavel.xlsx']
+
+ids_modal = {nom : {
+    'header': h,
+    'id_m': m,
+    'id_l': l,
+    'id_c': c,
+    'id_d': d,
+    'id_r': r,
+    'id_t': t,
+    'link': l2
+
+} for nom, h, m, l, c, d, r, t, l2 in zip(nomes, headers, id_m, id_l, id_c, id_d, id_r, id_t, links)}
+
+
+
+def create_modal(tab):
+    header = ids_modal[tab]['header']
+    id_m = ids_modal[tab]['id_m']
+    id_l = ids_modal[tab]['id_l']
+    id_c = ids_modal[tab]['id_c']
+    id_d = ids_modal[tab]['id_d']
+    id_r = ids_modal[tab]['id_r']
+    link = ids_modal[tab]['link']
+
+    return html.Div(
+        [
+            dbc.Modal(
+                [
+                    dbc.ModalHeader("DOWNLOAD DE FICHEIROS - {}".format(header)),
+                    dbc.ModalBody(["Qual o propósito deste download?",
+                                   dcc.RadioItems(
+                                       options=[
+                                           {"label": "Pessoal", "value": 1},
+                                           {"label": "Profissional", "value": 2},
+                                           {"label": "Académico", "value": 3},
+                                       ],
+                                       # value=1,
+                                       id=id_r,
+                                   ),
+
+
+                                   ]),
+
+                    dbc.ModalFooter(
+
+                        [
+                            html.A(
+                                children=dbc.Button("Download", id=id_d, className="ml-auto", color="primary",
+                                                    disabled=True),
+                                href = link,
+                                id=id_l
+                            ),
+                            dbc.Button(
+                                "Close", id=id_c, className="m1-auto"
+                            )]
+                    ),
+                ],
+                id=id_m,
+                centered=True,
+            ),
+        ]
+    )
+
+
+modal_cons = create_modal('consumo')
+modal_freg = create_modal('freg')
+
+modal_ar = create_modal('ar')
+modal_bal = create_modal('bal')
+
 collapse_side_cons = html.Div(
     [
         dbc.Button(
@@ -216,7 +306,7 @@ collapse_side_cons = html.Div(
             id="collapse-btn-cons",
             size="lg",
             # className="mb-3",
-#             outline=True,
+            # outline=True,
             color="link",
         ),
         dbc.Collapse(
@@ -318,14 +408,14 @@ collapse_freg = html.Div(
 
 download_button_freg = html.Div(
     [
-    html.A(
+html.A(
         children=html.I(
             className="fas fa-file-download fa-lg",
             id="target-freg",
         ),
-        href='/download/Consumo_Freguesias.xlsx',
-        id='link-file'
-    ),
+href="javascript:void(0);",
+id='link-dummy'
+),
     dbc.Tooltip(
         "Download dos Consumos de água potável (doméstico e total), número de contadores e número de smartmeters, por freguesia (.xlsx).",
         target="target-freg", style={'font-size': '1.4rem'}),
@@ -344,7 +434,7 @@ freg_container = html.Div([
                      is_open=False,
                      style={'textAlign': 'center', 'font-family': family_generico}
                  ),
-        ], width=5, align='center'),
+        ], width=7, align='center'),
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
     ], justify='center'),
 
@@ -475,8 +565,8 @@ download_button_consumo = html.Div(
             className="fas fa-file-download fa-lg",
             id="target-consumo",
         ),
-        href='/download/Consumo_AguaPotavel.xlsx',
-        id='link-file'
+        href='javascript:void(0);',
+        id='link-dummy'
     ),
     dbc.Tooltip(
         "Download do Consumo de água potável, por sector e por consumo não doméstico (.xlsx).",
@@ -488,23 +578,11 @@ download_button_consumo = html.Div(
 header_consumo = html.Div([
                             dbc.Row([
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo, download_button_consumo], align="center", justify="center", no_gutters=True), width=6, align="center"),
+                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo, download_button_consumo], align="center", justify="center", no_gutters=True), width=5, align="center"),
                                 dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                             ], justify="center"),
-                            # dbc.Row(
-                            #     dbc.Col(
-                            #
-                            #         # html.P('as'),
-                            #         html.A(children="Download destes dados (.xlsx)",
-                            #                href='/download/Consumo_AguaPotavel.xlsx',
-                            #                id='link-file'
-                            #                ),
-                            #         width=2, align='center'
-                            #     ),
-                            #     align='center',
-                            #     justify='center'
-                            # ),
+
 
                             dbc.Row([
                                 # dbc.Col([html.Div(className='vl', style={'height': 'inherit'})]),
@@ -522,7 +600,8 @@ header_consumo = html.Div([
                                     ),
                                 ], width=6, align='center'),
                                 # dbc.Col([html.Div(className='vl', style={'height': 'inherit'})]),
-                            ], justify='center')
+                            ], justify='center'),
+
 ])
 
 tab_consumo = html.Div(
@@ -557,7 +636,9 @@ tab_consumo = html.Div(
                                     dbc.Row([freg_container],  style={'margin-left':'2%'})
                                     ], width={'size': 10}, style={'margin-left': '17%', 'position': 'relative'}
                             )
-                        ])
+                        ]),
+                        modal_cons,
+                        modal_freg
 
                     ], style={'margin-top': '0.8%'}
 )
@@ -597,8 +678,8 @@ download_button_balanco = html.Div(
             className="fas fa-file-download fa-lg",
             id="target-bal",
         ),
-        href='/download/Balanco_Agua_Potavel.xlsx',
-        id='link-file'
+        href='javascript:void(0);',
+        id='link-dummy'
     ),
     dbc.Tooltip(
         "Download do balanço de água potável em Lisboa (.xlsx).",
@@ -658,7 +739,7 @@ bal_container = html.Div([
                                 # {"label": "Total", "value": "Total", 'disabled': True},
                             ],
                             value="Personalizado",
-                            id="radio-bal",
+                            id="radio-bal-anual",
                             labelStyle={'display': 'inline-block', 'margin-left': '4%'},
                             # inline=True,
                             # switch=True,
@@ -687,7 +768,7 @@ tab_balanco = html.Div([
     dbc.Row([
         dbc.Col(html.Div(side_bar_bal, style={'textAlign': 'center'}), className='pretty_container', width=3, style={'textAlign': 'left', 'margin-left': '0.8%'}),
         dbc.Col(bal_container, className='pretty_container eight columns', style={"padding": "0% 1% 1% 1%", "margin-left": "1%"})
-    ], justify='start'),
+    ], justify='start'), modal_bal,
 ], style={'margin-top': '0.8%'})
 
 collapse_ar = html.Div(
@@ -727,8 +808,8 @@ download_button_ar = html.Div(
             className="fas fa-file-download fa-lg",
             id="target-ar",
         ),
-        href='/download/Aguas_Residuais_e_Reutilizadas.xlsx',
-        id='link-file'
+        href='javascript:void(0);',
+        id='link-dummy'
     ),
     dbc.Tooltip(
         "Download das águas residuais tratadas e reutilizadas em Lisboa (.xlsx).",
@@ -740,7 +821,7 @@ download_button_ar = html.Div(
 ar_1_container = html.Div([
     dbc.Row([
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar, download_button_ar], align="center", justify="center", no_gutters=True), width=7, align='center'),
+        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar, download_button_ar], align="center", justify="center", no_gutters=True), width=8, align='center'),
         dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
     ], justify='center'),
 
@@ -792,7 +873,7 @@ collapse_ar_2 = html.Div(
 ar_2_container = html.Div(
                 [   dbc.Row([
                     dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                    dbc.Col(dbc.Row([html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), info_button_ar_2], align="center", justify="center", no_gutters=True), width=6, align="center"),
+                    dbc.Col(dbc.Row([html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), info_button_ar_2], align="center", justify="center", no_gutters=True), width=8, align="center"),
                     dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                 ], justify='center'),
@@ -812,7 +893,7 @@ ar_2_container = html.Div(
                                 # labelStyle={"margin-right": "0.5%"},
                                 # switch=True,
                                 value="Personalizado",
-                                id="radio-ar",
+                                id="radio-ar-anual",
                                 # inline=True,
                                 labelStyle={'display': 'inline-block', 'margin-left': '4%'},
 
@@ -858,7 +939,7 @@ tab_residuais = html.Div([
             ], className="pretty_container eight columns", align="center",
                 style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"}),
 
-])
+]), modal_ar
 
 
         ]),
@@ -884,11 +965,26 @@ def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory("data", path, as_attachment=True)
 
+
 app.layout = html.Div([
-    tabs,
-    html.Div(id='tabs-content'),
+
+
+        tabs,
+        html.Div(id='tabs-content'),
+
 
 ])
+#
+# app.layout = html.Div([
+#     dcc.Loading(children=
+#     [
+#         tabs,
+#         html.Div(id='tabs-content'),
+#
+#     ],
+#         fullscreen=True
+#     )
+# ])
 
 
 @app.callback(Output('tabs-content', 'children'),
@@ -900,6 +996,67 @@ def render_content(tab):
         return tab_balanco
     elif tab == 'tab-residuais':
         return tab_residuais
+
+
+for tab in ids_modal:
+
+    @app.callback(
+        Output(ids_modal[tab]['id_m'], "is_open"),
+        [
+         Input(ids_modal[tab]['id_t'], "n_clicks"),
+         Input(ids_modal[tab]['id_c'], "n_clicks")],
+        [State(ids_modal[tab]['id_m'], "is_open")],
+    )
+    def toggle_modal_consumo(n1, close, is_open):
+
+        if n1 or close:
+
+            return not is_open
+
+        return is_open
+
+#
+# @app.callback(
+#     [Output('link-file-freg', 'href'),
+#      Output("modal-freg", "is_open")],
+#     [
+#      Input("target-freg", "n_clicks"),
+#      Input("close-freg", "n_clicks")],
+#     [State("modal-freg", "is_open")],
+# )
+# def toggle_modal_freg(freg, close, is_open):
+#
+#     if freg or close:
+#         print("aqui")
+#         link = '/download/Consumo_Freguesias.xlsx'
+#         return link, not is_open
+#
+#     return 'javascript:void(0);', is_open
+
+for tab in ids_modal:
+    @app.callback(
+    Output(ids_modal[tab]['id_d'], 'disabled'),
+    [Input(ids_modal[tab]['id_r'], "value"), Input(ids_modal[tab]['id_c'], "n_clicks")]
+    )
+    def enable_dwnld_button(value, n):
+        if value:
+            return False
+        if n:
+            return True
+        else:
+            return True
+
+
+for tab in ids_modal:
+    print(ids_modal[tab]['id_r'])
+    @app.callback(
+    Output(ids_modal[tab]['id_r'], "value"),
+    [Input(ids_modal[tab]['id_c'], "n_clicks")]
+    )
+    def enable_dwnld_button(n):
+        if n:
+            return None
+
 
 
 def create_ano_bar_graph(df, ano_select):
@@ -1607,7 +1764,7 @@ def update_ano_line(drop_tipo, at, drop_cons):
     ],
 [
      Input('multi-tabs', 'active_tab'),
-     Input('radio-bal', 'value'),
+     Input('radio-bal-anual', 'value'),
     ]
 )
 def update_bal_drop(at, selector):
@@ -1775,7 +1932,7 @@ def update_balanco(ano_select, at):
     ],
 [
      Input('multi-tabs', 'active_tab'),
-     Input('radio-ar', 'value'),
+     Input('radio-ar-anual', 'value'),
     ]
 )
 def update_ar_drop(at, selector):
@@ -2074,6 +2231,6 @@ def update_map_ar(ano_select, at):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False, port = 5000, host ='0.0.0.0')
-    # app.run_server(debug=True)
+    # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
+    app.run_server(debug=True)
     # app.run_server(port=8080)
