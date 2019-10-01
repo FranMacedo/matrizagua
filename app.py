@@ -11,6 +11,7 @@ import json
 import math
 import numpy as np
 from flask import Flask, send_from_directory
+import openpyxl
 
 
 
@@ -221,7 +222,7 @@ app.scripts.config.serve_locally = True
 # ])
 
 nomes = ['consumo', 'freg', 'ar', 'bal']
-headers = ['CONSUMO DE ÁGUA POTÁVEL', 'CONSUMO DE ÁGUA POTÁVEL POR FREGUESIA', 'ÁGUAS RESIDUAIS', 'BALANÇO DE ÁGUA']
+headers = ['Consumo de Água Potável', 'Consumo de Água Potável por Freguesia', 'Águas Residuais', 'Balanço de Água']
 id_m = ['modal-consumo', 'modal-freg', 'modal-ar', 'modal-bal']
 id_l = ['link-file-consumo', 'link-file-freg', 'link-file-ar', 'link-file-bal']
 id_c = ['close-consumo', 'close-freg', 'close-ar', 'close-bal']
@@ -229,6 +230,7 @@ id_d = ['download-consumo', 'download-freg', 'download-ar', 'download-bal']
 id_r = ['radio-consumo', 'radio-freg', 'radio-ar', 'radio-bal']
 id_t = ['target-consumo', 'target-freg', 'target-ar', 'target-bal']
 links = ['/download/Consumo_AguaPotavel.xlsx', '/download/Consumo_Freguesias.xlsx', '/download/Aguas_Residuais_e_Reutilizadas.xlsx', '/download/Balanco_Agua_Potavel.xlsx']
+divs = ['hidden-consumo', 'hidden-freg', 'hidden-ar', 'hidden-bal']
 
 ids_modal = {nom : {
     'header': h,
@@ -238,9 +240,10 @@ ids_modal = {nom : {
     'id_d': d,
     'id_r': r,
     'id_t': t,
-    'link': l2
+    'link': l2,
+    'div':div
 
-} for nom, h, m, l, c, d, r, t, l2 in zip(nomes, headers, id_m, id_l, id_c, id_d, id_r, id_t, links)}
+} for nom, h, m, l, c, d, r, t, l2, div in zip(nomes, headers, id_m, id_l, id_c, id_d, id_r, id_t, links, divs)}
 
 
 
@@ -252,7 +255,7 @@ def create_modal(tab):
     id_d = ids_modal[tab]['id_d']
     id_r = ids_modal[tab]['id_r']
     link = ids_modal[tab]['link']
-
+    div = ids_modal[tab]['div']
     return html.Div(
         [
             dbc.Modal(
@@ -268,7 +271,7 @@ def create_modal(tab):
                                        # value=1,
                                        id=id_r,
                                    ),
-
+                                   html.Div(id=div, style={'display': 'none'})
 
                                    ]),
 
@@ -276,20 +279,21 @@ def create_modal(tab):
 
                         [
                             html.A(
-                                children=dbc.Button("Download", id=id_d, className="ml-auto", color="primary",
+                                children=dbc.Button("Download", id=id_d, className="ml-auto", color="primary",size="lg",
                                                     disabled=True),
                                 href = link,
                                 id=id_l
                             ),
                             dbc.Button(
-                                "Close", id=id_c, className="m1-auto"
+                                "Close", id=id_c, className="m1-auto",size="lg", color="danger"
                             )]
                     ),
                 ],
                 id=id_m,
                 centered=True,
+                style={'font-family': family_generico}
             ),
-        ]
+        ], style={'font-family': family_generico},
     )
 
 
@@ -343,7 +347,6 @@ side_bar_cons = html.Div(
                 )], style={'textAlign': "center", "margin-left": "7%", "margin-right": "5%", "padding": "2% 2%"}),
                 html.Hr(),
                 collapse_side_cons
-
             ]
 )
 
@@ -1004,17 +1007,51 @@ for tab in ids_modal:
         Output(ids_modal[tab]['id_m'], "is_open"),
         [
          Input(ids_modal[tab]['id_t'], "n_clicks"),
+         Input(ids_modal[tab]['id_d'], "n_clicks"),
          Input(ids_modal[tab]['id_c'], "n_clicks")],
         [State(ids_modal[tab]['id_m'], "is_open")],
     )
-    def toggle_modal_consumo(n1, close, is_open):
+    def toggle_modal_consumo(n1, n2, close, is_open):
 
-        if n1 or close:
-
+        if n1 or n2 or close:
             return not is_open
 
         return is_open
 
+
+for tab in ids_modal:
+
+    @app.callback(
+        Output(ids_modal[tab]['div'], 'children'),
+        [
+         Input(ids_modal[tab]['id_t'], "id"),
+         Input(ids_modal[tab]['id_d'], "n_clicks"),
+         Input(ids_modal[tab]['id_r'], "value")],
+    )
+    def regista_pessoas(nome, n, tipo):
+        if n:
+            print(nome, tipo)
+            if nome == 'target-consumo':
+                num = "2"
+            elif nome == 'target-freg':
+                num = "3"
+            elif nome == 'target-ar':
+                num = "4"
+            else:
+                num = "5"
+            if tipo == 1:
+                letra = 'B'
+            elif tipo == 2:
+                letra = 'C'
+            else:
+                letra = 'D'
+            position = letra + num
+            registo = openpyxl.load_workbook('data/registo_pessoas.xlsx')
+            registo_sheet = registo['Sheet1']
+            registo_sheet[position] = registo_sheet[position].value + 1
+            registo.save('data/registo_pessoas.xlsx')
+
+        return "aaa"
 #
 # @app.callback(
 #     [Output('link-file-freg', 'href'),
@@ -1040,6 +1077,7 @@ for tab in ids_modal:
     )
     def enable_dwnld_button(value, n):
         if value:
+
             return False
         if n:
             return True
@@ -1048,14 +1086,14 @@ for tab in ids_modal:
 
 
 for tab in ids_modal:
-    print(ids_modal[tab]['id_r'])
     @app.callback(
     Output(ids_modal[tab]['id_r'], "value"),
     [Input(ids_modal[tab]['id_c'], "n_clicks")]
     )
-    def enable_dwnld_button(n):
+    def enable_radio(n):
         if n:
             return None
+
 
 
 
