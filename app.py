@@ -11,10 +11,9 @@ import json
 import math
 import numpy as np
 from flask import Flask, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
 import openpyxl
-
-
-
+import psycopg2 
 
 ctx = dash.callback_context
 
@@ -66,7 +65,9 @@ aguas_r_df = pd.read_excel(file_path_ar, index_col='Ano')
 ar_centro_df = pd.read_excel(file_path_ar_centro)
 ar_reu_df = pd.read_excel(file_path_ar_reu, index_col='Ano')
 perc_ndom = ((ndom_df['Total']/1000)/(sector_df['Total']-sector_df['Perdas económicas']))*100
-anos = sector_df.index.unique().tolist()
+anos_cons = sector_df.index.unique().tolist()
+anos_ar = aguas_r_df.index.unique().tolist()
+anos_bal = bal_potavel_df.index.unique().tolist()
 
 
 
@@ -198,6 +199,8 @@ freg_center['id'] = [str(a + 1).zfill(2) for a in freg_center.index]
 TITLE_STYLE = {'textAlign': 'center', 'font-family': family_generico}
 INSTRUCTION_STYLE_center = {'textAlign': "center", 'font-family': family_generico, 'font-style': 'italic'}
 INSTRUCTION_STYLE_right = {'textAlign': "right", 'font-family': family_generico, 'font-style': 'italic'}
+INSTRUCTION_STYLE_left_cons = {'textAlign': "left", 'font-family': family_generico, 'font-style': 'italic', 'margin-left': '19%', 'position': 'relative'}
+INSTRUCTION_STYLE_left = {'textAlign': "left", 'font-family': family_generico, 'font-style': 'italic'}
 
 FONT_AWESOME = "https://use.fontawesome.com/releases/v5.10.2/css/all.css"
 
@@ -209,6 +212,26 @@ app.config['suppress_callback_exceptions'] = True
 server = app.server
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
+
+
+# app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
+# app.server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+# HEROKU
+app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
+app.server.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://yibvjryninkbcv:28fce500a912b4a78e6277719ed598082c19543ca5a1c394d235e3fe79f641e9@ec2-54-247-171-30.eu-west-1.compute.amazonaws.com:5432/d2719tk9ncf4kl'
+
+app.server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app.server)
+
+class Pessoas(db.Model):
+    __tablename__ = "registo"
+    id = db.Column(db.Integer, primary_key=True)
+    consumo = db.Column(db.String(20))
+    freguesias = db.Column(db.String(20))
+    aguasresiduais = db.Column(db.String(20))
+    balanco = db.Column(db.String(20))
+    def __repr__(self):
+        return f"pessoas('{self.consumo}', '{self.freguesias}', '{self.aguasresiduais}', '{self.balanco}')"
 
 
 # radioitems_modal = dbc.FormGroup(
@@ -246,6 +269,22 @@ ids_modal = {nom : {
 } for nom, h, m, l, c, d, r, t, l2, div in zip(nomes, headers, id_m, id_l, id_c, id_d, id_r, id_t, links, divs)}
 
 
+
+def create_year_button(ano, tab, anos, classe):
+    tamanho = 100/len(anos)
+    if tamanho < 7:
+        tamanho = tamanho*2
+    butao = dbc.Button(ano, color='primary', outline=True, id='sel_{0}_{1}'.format(ano, tab), className=classe)
+
+    return butao
+
+def create_year_button_last(ano, tab, anos, classe):
+    tamanho = 100/len(anos)
+    if tamanho < 7:
+        tamanho = tamanho*2
+    butao = dbc.Button(ano, color='primary', outline=False, id='sel_{0}_{1}'.format(ano, tab), className=classe)
+
+    return butao
 
 def create_modal(tab):
     header = ids_modal[tab]['header']
@@ -318,7 +357,6 @@ collapse_side_cons = html.Div(
                 dcc.Markdown('''
                 _O consumo anual apresentado inclui também as **perdas económicas** (ou aparentes)._ 
                 
-                _Estas perdas resultam de consumos não autorizados, fornecimentos não medidos e erros de medição._
                 
                 '''),
                 id ='info-cons'),
@@ -328,24 +366,32 @@ collapse_side_cons = html.Div(
         ),
     ], style={'font-family': family_generico, 'margin-bottom':'2%'},
 )
+
+
 side_bar_cons = html.Div(
             [
                 html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
                         style=TITLE_STYLE),
-                html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
+                html.P(dcc.Markdown('''**Seleccione o ano pretendido:**'''), style=INSTRUCTION_STYLE_center),
+
+                html.Div(
+                    [create_year_button(ano, 'cons', anos_cons, 'bt-cons') for ano in anos_cons[:-1]] + [create_year_button_last(anos_cons[-1], 'cons', anos_cons, 'bt-cons')],
+                    # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1r1em"}
+                ),
+                html.Div(id='mem-year-cons', style={'display': 'none'}),
                 dcc.Graph(id="ano-bar-graph", config={'displayModeBar': False}),
-                html.Div([dcc.Slider(
-                    id='year-slider',
-                    min=sector_df.index.min(),
-                    max=sector_df.index.max(),
-                    value=sector_df.index.max(),
-                    marks={
-                        str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}}
-                        for ano in sector_df.index.unique()
-                    },
-                    step=None,
-                )], style={'textAlign': "center", "margin-left": "7%", "margin-right": "5%", "padding": "2% 2%"}),
-                html.Hr(),
+                # html.Div([dcc.Slider(
+                #     id='year-slider',
+                #     min=sector_df.index.min(),
+                #     max=sector_df.index.max(),
+                #     value=sector_df.index.max(),
+                #     marks={
+                #         str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}}
+                #         for ano in sector_df.index.unique()
+                #     },
+                #     step=None,
+                # )], style={'textAlign': "center", "margin-left": "7%", "margin-right": "5%", "padding": "2% 2%"}),
+                # html.Hr(),
                 collapse_side_cons
             ]
 )
@@ -354,19 +400,24 @@ side_bar_bal = html.Div(
             [
                 dbc.Row(html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
                         style=TITLE_STYLE), align="center", justify="center"),
-                html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
+                html.P(dcc.Markdown('''**Seleccione o ano pretendido:**'''), style=INSTRUCTION_STYLE_center),
+                html.Div(
+                    [create_year_button(ano, 'bal', anos_bal, 'bt-bal') for ano in anos_bal[:-1]] + [create_year_button_last(anos_bal[-1], 'bal', anos_bal, 'bt-bal')],
+                    # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1rem"}
+                ),
+                html.Div(id='mem-year-bal', style={'display': 'none'}),
                 dcc.Graph(id="ano-bar-graph-bal", config={'displayModeBar': False}),
-                html.Div([dcc.Slider(
-                    id='year-slider-bal',
-                    min=bal_potavel_df.index.min(),
-                    max=bal_potavel_df.index.max(),
-                    value=bal_potavel_df.index.max(),
-                    marks={
-                        str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}}
-                        for ano in bal_potavel_df.index.unique()
-                    },
-                    step=None,
-                )], style={'textAlign': "center", "margin-left": "2.5%", "margin-right": "2.5%", "padding": "2% 2%"})
+                # html.Div([dcc.Slider(
+                #     id='year-slider-bal',
+                #     min=bal_potavel_df.index.min(),
+                #     max=bal_potavel_df.index.max(),
+                #     value=bal_potavel_df.index.max(),
+                #     marks={
+                #         str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}}
+                #         for ano in bal_potavel_df.index.unique()
+                #     },
+                #     step=None,
+                # )], style={'textAlign': "center", "margin-left": "2.5%", "margin-right": "2.5%", "padding": "2% 2%"})
                 ])
 
 side_bar_ar = html.Div(
@@ -374,17 +425,22 @@ side_bar_ar = html.Div(
 
         dbc.Row(html.H6('Total Anual de Água Residual Tratada, em Lisboa ({})'.format(unidade),
                 style=TITLE_STYLE), align="center", justify="center"),
-        html.P("Seleccione o ano pretendido:", style=INSTRUCTION_STYLE_center),
+        html.P(dcc.Markdown('''**Seleccione o ano pretendido:**'''), style=INSTRUCTION_STYLE_center),
+        html.Div(
+            [create_year_button(ano, 'ar', anos_ar, 'bt-ar') for ano in anos_ar[:-1]] +  [create_year_button_last(anos_ar[-1], 'ar', anos_ar, 'bt-ar')],
+            # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1rem"}
+        ),
+        html.Div(id='mem-year-ar', style={'display': 'none'}),
 
         dcc.Graph(id="ano-bar-graph-ar", config={'displayModeBar': False}),
-        html.Div([dcc.Slider(
-            id='year-slider-ar',
-            min=aguas_r_df.index.min(),
-            max=aguas_r_df.index.max(),
-            value=aguas_r_df.index.max(),
-            marks={str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}} for ano in aguas_r_df.index.unique()},
-            step=None,
-        )], style={'textAlign': "center", "margin-left": "0.3%", "margin-right": "1.3%", "padding": "2% 2%"})
+        # html.Div([dcc.Slider(
+        #     id='year-slider-ar',
+        #     min=aguas_r_df.index.min(),
+        #     max=aguas_r_df.index.max(),
+        #     value=aguas_r_df.index.max(),
+        #     marks={str(ano): {'label': '', 'style': {'writingMode': 'vertical-rl', 'textOrientation': 'mixed'}} for ano in aguas_r_df.index.unique()},
+        #     step=None,
+        # )], style={'textAlign': "center", "margin-left": "0.3%", "margin-right": "1.3%", "padding": "2% 2%"})
     ]
 )
 
@@ -443,7 +499,7 @@ freg_container = html.Div([
 
     html.Div([dbc.Row([
             dbc.Col([
-                html.P("Filtrar informação por Freguesia:", style=INSTRUCTION_STYLE_center),
+                html.P(dcc.Markdown('''**Filtrar por Freguesia:**'''), style=INSTRUCTION_STYLE_center),
                 dcc.Dropdown(
                     id='drop-freg',
                     options=[
@@ -524,8 +580,16 @@ ano_line_container = html.Div(
                                 html.H6(id="header-ano-line", style=TITLE_STYLE)
 
                         ], align="center", justify="center", no_gutters=True),
-                            dbc.Row([dbc.Col(id="sector-tipo-inst",
-                                        style=INSTRUCTION_STYLE_center, width=3, align="start")], justify='center', style={'margin-bottom': '2%'}),
+                            dbc.Row([
+
+                                dbc.Col(id="sector-tipo-inst",
+                                        style=INSTRUCTION_STYLE_center, width=12, align="start"),
+                                # dbc.Col(dcc.Markdown('''**Personalizar:**'''),
+                                #         style=INSTRUCTION_STYLE_center, width=6, align="start")
+
+
+
+                                     ], justify='center', style={'margin-bottom': '2%'}),
                             dbc.Row([
                                      dbc.Col(
                                     dcc.RadioItems(
@@ -590,7 +654,7 @@ header_consumo = html.Div([
                             dbc.Row([
                                 # dbc.Col([html.Div(className='vl', style={'height': 'inherit'})]),
                                 dbc.Col([
-                                    html.P("Seleccione a desagregação pretendida:", style=INSTRUCTION_STYLE_center),
+                                    html.P(dcc.Markdown('''**Seleccione a desagregação pretendida:**'''), style=INSTRUCTION_STYLE_center),
                                     dcc.Dropdown(
                                         id='drop-cons',
                                         options=[
@@ -611,9 +675,9 @@ tab_consumo = html.Div(
                     [
                         dbc.Row([
 
-                                dbc.Col(dbc.Col(side_bar_cons, style={"position": "fixed", "width": "inherit"},
+                                dbc.Col(side_bar_cons,
 
-                                className='pretty_container', width=2), width=2),
+                                className='pretty_container sidebar'),
 
                             dbc.Col(
                                 [
@@ -630,18 +694,20 @@ tab_consumo = html.Div(
                                                 ]),
 
                                                 dbc.Row([
-                                                        dbc.Col(donut_container, width=5),
-                                                        dbc.Col(ano_line_container, width=7)
+                                                        dbc.Col(donut_container, md=5),
+                                                        dbc.Col(ano_line_container, md=7)
                                                 ])
-                                            ], width=12, align='center')
+                                            ], md=12, align='center')
 
                                         ],  className='pretty_container', style={'margin-left':'2%'}),
                                     dbc.Row([freg_container],  style={'margin-left':'2%'})
-                                    ], width={'size': 10}, style={'margin-left': '17%', 'position': 'relative'}
+                                    ], md={'size': 10}, style={'margin-left': '17%', 'position': 'relative'}
                             )
                         ]),
                         modal_cons,
-                        modal_freg
+                        modal_freg,
+                        html.Div(html.P('Dados disponibilizados pela EPAL e pela Águas do Tejo Atlântico (ADTA).',
+                                        style=INSTRUCTION_STYLE_left_cons))
 
                     ], style={'margin-top': '0.8%'}
 )
@@ -733,7 +799,7 @@ bal_container = html.Div([
             ], justify="center"),
 
                 dbc.Row([
-                    dbc.Col("Filtrar por fluxo de água:", width=2, align="center", style=INSTRUCTION_STYLE_right),
+                    dbc.Col(dcc.Markdown('''**Filtrar por fluxo de água:**'''), width=2, align="center", style=INSTRUCTION_STYLE_right),
                     dbc.Col(
                         dcc.RadioItems(
                             options=[
@@ -764,14 +830,17 @@ bal_container = html.Div([
                 ], justify='center', align="start", no_gutters=True),
                 dcc.Graph(id='bal-timeseries', config={'displayModeBar': False})]
         )
-    )
+    ),
+
 
 ])
 tab_balanco = html.Div([
     dbc.Row([
-        dbc.Col(html.Div(side_bar_bal, style={'textAlign': 'center'}), className='pretty_container', width=3, style={'textAlign': 'left', 'margin-left': '0.8%'}),
+        dbc.Col(html.Div(side_bar_bal, style={'textAlign': 'center'}), className='pretty_container', md=3, style={'textAlign': 'left', 'margin-left': '0.8%'}),
         dbc.Col(bal_container, className='pretty_container eight columns', style={"padding": "0% 1% 1% 1%", "margin-left": "1%"})
     ], justify='start'), modal_bal,
+    html.Div(html.P('Dados disponibilizados pela EPAL e pela Águas do Tejo Atlântico (ADTA).',
+                    style=INSTRUCTION_STYLE_left))
 ], style={'margin-top': '0.8%'})
 
 collapse_ar = html.Div(
@@ -880,8 +949,11 @@ ar_2_container = html.Div(
                     dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
 
                 ], justify='center'),
-                    dbc.Col("Filtrar por tipo de fluxo:", align="center", width=12, style=INSTRUCTION_STYLE_center),
+                    dbc.Row([
+                    dbc.Col(dcc.Markdown('''**Filtrar por tipo de fluxo:**'''), align="center", width=3, style=INSTRUCTION_STYLE_left),
+                    dbc.Col(dcc.Markdown('''**Personalizar:**'''), align="center",width={"size": 3, "offset": 1}, style=INSTRUCTION_STYLE_center),
 
+                    ], justify='center', align="start", no_gutters=True),
                     dbc.Row([
                         dbc.Col(
                             dcc.RadioItems(
@@ -902,7 +974,6 @@ ar_2_container = html.Div(
 
                             ),
                             width=4, style={'font-family': family_generico}
-
                         ),
                         dbc.Col(
                             dcc.Dropdown(
@@ -922,7 +993,7 @@ ar_2_container = html.Div(
 tab_residuais = html.Div([
 
         dbc.Row([
-            dbc.Col(side_bar_ar, className="pretty_container", width=3, style={'margin-top': '0.8%', 'margin-left': '0.8%'}),
+            dbc.Col(side_bar_ar, className="pretty_container", lg=3, style={'margin-top': '0.8%', 'margin-left': '0.8%'}),
 
 
 
@@ -930,21 +1001,22 @@ tab_residuais = html.Div([
                 dbc.Row([
                     dbc.Col([
                         ar_1_container
-                    ], width=12),
+                    ], lg=12),
                 ]),
 
                 dbc.Row([
                     dbc.Col([
                     ar_2_container
-                    ], width=12)
+                    ], lg=12)
                 ])
 
             ], className="pretty_container eight columns", align="center",
                 style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"}),
 
-]), modal_ar
-
-
+]), modal_ar,
+    html.Div(html.P('Dados disponibilizados pela EPAL e pela Águas do Tejo Atlântico (ADTA).',
+                    style=INSTRUCTION_STYLE_left)),
+    html.Div('escondido', id='escondido', style={'display': 'none'})
         ]),
 
 
@@ -988,6 +1060,65 @@ app.layout = html.Div([
 #         fullscreen=True
 #     )
 # ])
+def update_buttons(type_bar, ano_bar_graph_selected, trigger, anos, tab):
+
+    if trigger != type_bar + '.clickData':
+
+        anos_bool = [trigger != f'sel_{a}_{tab}.n_clicks' for a in anos]
+
+        if sum(anos_bool) == len(anos):
+            anos_bool = [True]*(len(anos)-1) + [False]
+
+        a_pos = anos_bool.index(False)
+        ano = anos[a_pos]
+        return anos_bool + [json.dumps(str(ano))]
+
+    else:
+
+        anos_bool = [a != int(ano_bar_graph_selected['points'][0]['x']) for a in anos]
+        a_pos = anos_bool.index(False)
+        ano = anos[a_pos]
+        return anos_bool + [json.dumps(str(ano))]
+
+
+@app.callback(
+    [Output(f"sel_{a}_cons", "outline") for a in anos_cons]
+    + [Output("mem-year-cons", "children")]
+    ,
+    [Input("ano-bar-graph", "clickData")] + [Input(f"sel_{a}_cons", "n_clicks") for a in anos_cons]
+)
+def update_button_outline_cons(ano_bar_graph_selected,sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018):
+
+    if not ctx.triggered:
+        raise PreventUpdate
+
+    return update_buttons("ano-bar-graph", ano_bar_graph_selected, ctx.triggered[0]['prop_id'], anos_cons, 'cons')
+
+
+@app.callback(
+    [Output(f"sel_{a}_ar", "outline") for a in anos_ar]
+    + [Output("mem-year-ar", "children")]
+    ,
+    [Input("ano-bar-graph-ar", "clickData")] + [Input(f"sel_{a}_ar", "n_clicks") for a in anos_ar]
+)
+def update_button_outline_ar(ano_bar_graph_selected, sel_03, sel_04, sel_05, sel_06, sel_07, sel_08, sel_09, sel_10, sel_11, sel_12, sel_13, sel_14, sel_15, sel_16, sel_17, sel_18):
+    if not dash.callback_context.triggered:
+        raise PreventUpdate
+
+    return update_buttons('ano-bar-graph-ar', ano_bar_graph_selected, ctx.triggered[0]['prop_id'], anos_ar, 'ar')
+
+@app.callback(
+    [Output(f"sel_{a}_bal", "outline") for a in anos_bal]
+    + [Output("mem-year-bal", "children")]
+    ,
+    [Input("ano-bar-graph-bal", "clickData")] + [Input(f"sel_{a}_bal", "n_clicks") for a in anos_bal]
+)
+def update_button_outline_bal(ano_bar_graph_selected, sel_2008, sel_2009,
+                               sel_2010, sel_2011, sel_2012, sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018):
+    if not dash.callback_context.triggered:
+        raise PreventUpdate
+
+    return update_buttons("ano-bar-graph-bal", ano_bar_graph_selected, ctx.triggered[0]['prop_id'], anos_bal, 'bal')
 
 
 @app.callback(Output('tabs-content', 'children'),
@@ -1024,34 +1155,49 @@ for tab in ids_modal:
     @app.callback(
         Output(ids_modal[tab]['div'], 'children'),
         [
-         Input(ids_modal[tab]['id_t'], "id"),
-         Input(ids_modal[tab]['id_d'], "n_clicks"),
-         Input(ids_modal[tab]['id_r'], "value")],
-    )
-    def regista_pessoas(nome, n, tipo):
-        if n:
-            print(nome, tipo)
-            if nome == 'target-consumo':
-                num = "2"
-            elif nome == 'target-freg':
-                num = "3"
-            elif nome == 'target-ar':
-                num = "4"
-            else:
-                num = "5"
-            if tipo == 1:
-                letra = 'B'
-            elif tipo == 2:
-                letra = 'C'
-            else:
-                letra = 'D'
-            position = letra + num
-            registo = openpyxl.load_workbook('data/registo_pessoas.xlsx')
-            registo_sheet = registo['Sheet1']
-            registo_sheet[position] = registo_sheet[position].value + 1
-            registo.save('data/registo_pessoas.xlsx')
 
-        return "aaa"
+         Input(ids_modal[tab]['id_d'], "n_clicks"),
+
+        ],
+        [
+            State(ids_modal[tab]['id_t'], "id"),
+            State(ids_modal[tab]['id_r'], "value")
+         ]
+    )
+    def regista_pessoas(n, nome, tipo):
+        if not ctx.triggered:
+            raise PreventUpdate
+        if n:
+            if nome == 'target-consumo':
+                num = 0
+            elif nome == 'target-freg':
+                num = 1
+            elif nome == 'target-ar':
+                num = 2
+            else:
+                num = 3
+            if tipo == 1:
+                letra = 'pessoal'
+            elif tipo == 2:
+                letra = 'profissional'
+            else:
+                letra = 'academico'
+
+            pessoa_lista = ["", "", "", ""]
+            pessoa_lista[num] = letra
+            registo = Pessoas(consumo=pessoa_lista[0], freguesias=pessoa_lista[1], aguasresiduais=pessoa_lista[2], balanco=pessoa_lista[3])
+
+            db.session.add(registo)
+            db.session.commit()
+
+            # position = letra + num
+            # print(position)
+            # registo = openpyxl.load_workbook('data/registo_pessoas.xlsx')
+            # registo_sheet = registo['Sheet1']
+            # registo_sheet[position] = registo_sheet[position].value + 1
+            # registo.save('data/registo_pessoas.xlsx')
+
+        return None
 #
 # @app.callback(
 #     [Output('link-file-freg', 'href'),
@@ -1144,59 +1290,111 @@ def create_ano_bar_graph(df, ano_select):
 
 
     return fig
-
+#
+# def update_slider_template(ano_bar_graph_selected):
+#
+#
+#     if ano_bar_graph_selected is None:
+#         return 2018
+#     else:
+#         return int(ano_bar_graph_selected['points'][0]['x'])
 
 @app.callback(
 
 
     Output("ano-bar-graph", "figure"),
 
-    [Input("year-slider", "value"),
-     Input('multi-tabs', 'active_tab')
+    [
+        # Input("year-slider", "value"),
+     Input('multi-tabs', 'active_tab'),
+     Input("mem-year-cons", "children"),
 
      ]
 )
-def update_ano_bar_cons(ano_select, at):
+def update_ano_bar_cons(at, ano_mem):
     if not ctx.triggered or at != 'tab-consumo':
         raise PreventUpdate
-
-    return create_ano_bar_graph(sector_df, ano_select)
-
+    try:
+        ano = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano = anos_cons[-1]
+    # print(ano)
+    return create_ano_bar_graph(sector_df, ano)
+#
+#
+# @app.callback(
+#     Output("year-slider", "value"),
+#     [Input("ano-bar-graph", "clickData")])
+# def update_year_slider_cons(ano_bar_graph_selected):
+#     if not dash.callback_context.triggered:
+#         raise PreventUpdate
+#     return update_slider_template (ano_bar_graph_selected)
+#
 
 @app.callback(
     Output("ano-bar-graph-bal", "figure"),
-    [Input("year-slider-bal", "value"),
-     Input('multi-tabs', 'active_tab')
+    [
+     # Input("year-slider-bal", "value"),
+     Input('multi-tabs', 'active_tab'),
+     Input("mem-year-bal", "children"),
      ]
 )
-def update_ano_bar_bal(ano_select, at):
+def update_ano_bar_bal(at, ano_mem):
     if not ctx.triggered or at != 'tab-balanco':
         raise PreventUpdate
-
+    try:
+        ano = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano = anos_bal[-1]
     df = bal_potavel_df
     df = df.loc[df['Ordem']=='Água consumida em Lisboa','value'].to_frame()
     df = df.rename({'value': 'Total'}, axis='columns')
     df = df*1000
-    return create_ano_bar_graph(df, ano_select)
+
+    return create_ano_bar_graph(df, ano)
+
+# @app.callback(
+#     Output("year-slider-bal", "value"),
+#     [Input("ano-bar-graph-bal", "clickData")])
+# def update_year_slider_bal(ano_bar_graph_selected):
+#     if not dash.callback_context.triggered:
+#         raise PreventUpdate
+#     return update_slider_template (ano_bar_graph_selected)
 
 
 @app.callback(
     Output("ano-bar-graph-ar", "figure"),
-    [Input("year-slider-ar", "value"),
-     Input('multi-tabs', 'active_tab')
+    [
+        # Input("year-slider-ar", "value"),
+     Input('multi-tabs', 'active_tab'),
+     Input("mem-year-ar", "children"),
+
      ]
 )
-def update_ano_bar_ar(ano_select, at):
+def update_ano_bar_ar(at, ano_mem):
     if not ctx.triggered or at != 'tab-residuais':
         raise PreventUpdate
+    try:
+        ano = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano = anos_ar[-1]
     df = aguas_r_df
     bad_df = df.Subsistema.isin(['Total'])
     df = df[~bad_df]
     df = df.loc[df.Subsistema == 'Total - Água Tratada', 'Total'].to_frame()
     df = df*1000
-    fig = create_ano_bar_graph(df, ano_select)
+    fig = create_ano_bar_graph(df, ano)
     fig.update_layout(xaxis_tickangle=-80)
     return fig
+#
+#
+# @app.callback(
+#     Output("year-slider-ar", "value"),
+#     [Input("ano-bar-graph-ar", "clickData")])
+# def update_year_slider_bal(ano_bar_graph_selected):
+#     if not dash.callback_context.triggered:
+#         raise PreventUpdate
+#     return update_slider_template (ano_bar_graph_selected)
 
 
 @app.callback(
@@ -1208,14 +1406,18 @@ def update_ano_bar_ar(ano_select, at):
         Output('bar-freguesias', 'figure')
     ],
     [
-        Input('year-slider', 'value'),
+        Input('mem-year-cons', 'chidren'),
         Input('drop-freg', 'value'),
         Input('multi-tabs', 'active_tab')
      ],
 )
-def update_bar_freguesias(ano_select, drop_select, at):
+def update_bar_freguesias(ano_mem, drop_select, at):
     if not ctx.triggered or at != 'tab-consumo':
         raise PreventUpdate
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
 
     if ano_select < 2017:
         # text_alert = "Ausência de dados para {}".format(str(ano_select))
@@ -1319,14 +1521,19 @@ def update_bar_freguesias(ano_select, drop_select, at):
      Output('alert-map', 'children'),
      Output('alert-map', 'is_open'),
      Output('mapa-freguesias', 'figure')],
-    [Input('year-slider', 'value'),
+    [Input('mem-year-cons', 'children'),
      Input('drop-freg', 'value'),
      Input('multi-tabs', 'active_tab')
      ]
 )
-def update_mapa_freguesias(ano_select, drop_select, at):
+def update_mapa_freguesias(ano_mem, drop_select, at):
     if not ctx.triggered or at != 'tab-consumo':
         raise PreventUpdate
+
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
 
     if ano_select < 2017:
         text_alert = "Ausência de dados para {}".format(str(ano_select))
@@ -1530,11 +1737,17 @@ def toggle_collapse_donut(n, is_open):
     [Output('info-donut', 'children'),
      Output('donut-sector', 'figure'),
      Output('header-donut', 'children')],
-    [Input('year-slider', 'value'),
+    [Input('mem-year-cons', 'children'),
      Input('drop-cons', 'value'),
      ],)
-def update_donut(ano_select, drop_cons):
+def update_donut(ano_mem, drop_cons):
     layout_donut = copy.deepcopy(layout)
+
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
+
 
     # ano_select = 2018
     if drop_cons == "consumo_sector":
@@ -1712,7 +1925,7 @@ def update_ano_line(drop_tipo, at, drop_cons):
         color_line = [color_sector_live_d[x] for x in lista_index]
         color_fill = [color_sector_dead_d[x] for x in lista_index]
         title = "Consumo Anual, por Sector de Consumo"
-        sector_tipo_inst = "Filtrar por sector:"
+        sector_tipo_inst = dcc.Markdown('''**Filtrar por sector:**''')
 
     else:
         if not all(elem in ndom_df.columns.to_list() for elem in drop_tipo):
@@ -1732,11 +1945,18 @@ def update_ano_line(drop_tipo, at, drop_cons):
     i = 0
     anos = df.index.unique().tolist()
 
-
+    minimos = []
+    maximos = []
     for trace in lista_index:
         my_text = [trace + ': ' + '{:.1f}'.format(tr) + ' | ' + unidade_1 + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
 
         df_trace = df[[trace]]
+        # minimo = min(df_trace)
+
+        minimo=min(df_trace[trace].tolist())
+        maximo=max(df_trace[trace].tolist())
+        minimos.append(minimo)
+        maximos.append(maximo)
         if False in (df_trace.T != 0).any().tolist():
 
             df_trace.replace(0, np.nan, inplace=True)
@@ -1763,7 +1983,18 @@ def update_ano_line(drop_tipo, at, drop_cons):
             )
         )
         i += 1
+    try:
 
+        smaller = min(minimos)
+        bigger = max(maximos)
+    except:
+        smaller = 0
+        bigger = 30
+    espaco = min((bigger-smaller)*2, 5)
+    y_min = max(smaller - espaco, 0)
+    y_max = bigger + espaco
+
+    y_span = [y_min, y_max]
 
     layout_ano_line['legend'] = go.layout.Legend(
         y=1,
@@ -1785,10 +2016,9 @@ def update_ano_line(drop_tipo, at, drop_cons):
 
     # layout_ano_line['title'] = dict(text=title, xref='paper', x=0.5)
     layout_ano_line['showlegend'] = True
-
+    # , range = y_span
     fig.update_layout(layout_ano_line)
-    fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF")
-
+    fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF", range = y_span)
     fig.update_xaxes(showgrid=False)
     # fig.show()
     # fig.update_yaxes(showgrid=False)
@@ -1901,13 +2131,17 @@ def update_timeseries(drop_bal):
     [
      Output('bal-header', 'children'),
      Output('bal-potavel', 'figure')],
-    [Input('year-slider-bal', 'value'),
+    [Input('mem-year-bal', 'children'),
      Input('multi-tabs', 'active_tab'),
      ]
 )
-def update_balanco(ano_select, at):
+def update_balanco(ano_mem, at):
     if not dash.callback_context.triggered or at != 'tab-balanco':
         raise PreventUpdate
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
 
     # ano_select=2018
     df = bal_potavel_df.loc[ano_select, :]
@@ -1916,7 +2150,7 @@ def update_balanco(ano_select, at):
 
     color_line = [color_balanco_live_d[x] for x in df['Ordem']]
     color_fill = [color_balanco_dead_d[x] for x in df['Ordem']]
-
+    #
     my_text = [nome + ": " + str(valor) + unidade_1 for nome, valor in
                zip(list(df['Ordem']), list(df['value']))]
 
@@ -1927,11 +2161,12 @@ def update_balanco(ano_select, at):
             y=[0, 1],
         ),
         orientation="h",
+        arrangement='fixed',
         valueformat=".1f",
         valuesuffix=unidade_1,
         # hoverinfo="x",
         node=dict(
-            pad=10,
+            pad=30,
             thickness=30,
             line=dict(
                 color=color_line,
@@ -1939,7 +2174,7 @@ def update_balanco(ano_select, at):
             ),
             label=my_text,
             color=color_fill,
-            x=[0.4, 0.4, 0.7, 0.9, 0.7, 0],
+            x=[0.4, 0.4, 0.7, 0.95, 0.7, 0],
             y=[0.18, 0.7, 0.74, 0.48, 0.4, 0],
         ),
         link=dict(
@@ -1951,7 +2186,7 @@ def update_balanco(ano_select, at):
     )
     ])
     # layout_balanco['width']= 100
-    # layout_balanco['margin'] = dict(l=0, r=0, b=0, t=0)
+    layout_balanco['margin'] = dict(l=0, r=10, b=30, t=30)
     layout_balanco['autosize'] = True
 
     fig.update_layout(layout_balanco)
@@ -2035,11 +2270,17 @@ def update_ar_timeseries(drop_ar, at):
 
     fig = go.Figure()
     i = 0
-
+    minimos = []
+    maximos = []
     for trace in lista_subs:
         df_sub = df[df['Subsistema']==trace]
         my_text = [trace + ': ' + '{:.2f}'.format(tr) + unidade_temp + "<br>Ano: " + str(ano) for tr, ano in
                    zip(list(df_sub['Total']), anos)]
+
+        minimo = min(df_sub['Total'].tolist())
+        maximo = max(df_sub['Total'].tolist())
+        minimos.append(minimo)
+        maximos.append(maximo)
 
         if False in (df_sub['Total'].T != 0.0).tolist():
             df_sub = df_sub.replace(0, np.nan).copy()
@@ -2074,6 +2315,20 @@ def update_ar_timeseries(drop_ar, at):
             )
         )
         i += 1
+
+    try:
+
+        smaller = min(minimos)
+        bigger = max(maximos)
+    except:
+        smaller = 0
+        bigger = 30
+    espaco = min((bigger-smaller)*2, 20)
+    y_min = max(smaller - espaco, 0)
+    y_max = bigger + espaco
+
+    y_span = [y_min, y_max]
+
     layout_ar['legend'] = go.layout.Legend(
         y=1,
         x=0.5,
@@ -2091,7 +2346,7 @@ def update_ar_timeseries(drop_ar, at):
     fig.update_layout(layout_ar)
     fig.update_layout(barmode='group', xaxis_tickangle=-45, showlegend=True)
     fig.update_xaxes(type='category', showgrid=True)
-    fig.update_yaxes(title_text=title, showgrid=True, gridcolor="#E0E1DF")
+    fig.update_yaxes(title_text=title, showgrid=True, gridcolor="#E0E1DF", range = y_span)
     return fig
     # fig.show()
 
@@ -2100,13 +2355,18 @@ def update_ar_timeseries(drop_ar, at):
     [Output('bar-ar', 'figure'),
      Output('info-ar', 'children'),
      Output('header-bar-ar', 'children')],
-    [Input('year-slider-ar', 'value'),
+    [Input('mem-year-ar', 'children'),
      Input('multi-tabs', 'active_tab')
      ]
 )
-def update_bar_ar(ano_select, at):
+def update_bar_ar(ano_mem, at):
     if not dash.callback_context.triggered or at != 'tab-residuais':
         raise PreventUpdate
+
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
 
     layout_bar_ar = copy.deepcopy(layout)
     df = aguas_r_df[aguas_r_df.index == ano_select]
@@ -2188,35 +2448,127 @@ def update_bar_ar(ano_select, at):
 
     return fig, texto_col,  title
 
+def legend_on_off(concelho, visivel, memoria):
+    if concelho == 0:
+        if memoria['Outros'] == 'off':
+            if visivel == 'legendonly':
+                # print('Lisboa: Desligado   :::   Outros: Desilgado')
+                memoria['Lisboa'] = 'off'
+            else:
+                # print('Lisboa: Ligado   :::   Outros: Desilgado')
+                memoria['Lisboa'] = 'on'
+        else:
+            if visivel == 'legendonly':
+                # print('Lisboa: Desligado   :::   Outros: Ligados')
+                memoria['Lisboa'] = 'off'
+            else:
+                # print('Lisboa: Ligado   :::   Outros: Ligados')
+                memoria['Lisboa'] = 'on'
 
+    elif concelho == 1:
+        if memoria['Lisboa'] == 'off':
+            if visivel == 'legendonly':
+                # print('Lisboa: Desligado   :::   Outros: Desilgado')
+                memoria['Outros'] = 'off'
+            else:
+                # print('Lisboa: Desligado   :::   Outros: Ligados')
+                memoria['Outros'] = 'on'
+        else:
+            if visivel == 'legendonly':
+                # print('Lisboa: Ligado   :::   Outros: Desligado')
+                memoria['Outros'] = 'off'
+            else:
+                # print('Lisboa: Ligado   :::   Outros: Ligados')
+                memoria['Outros'] = 'on'
+    else:
+        memoria['Lisboa'] = 'on'
+        memoria['Outros'] = 'on'
+
+    return memoria
 
 @app.callback(
+    [
+    Output('escondido', 'children'),
     Output('map-ar', 'figure'),
-    [Input('year-slider-ar', 'value'),
-     Input('multi-tabs', 'active_tab')
+        ],
+    [Input('mem-year-ar', 'children'),
+     Input('multi-tabs', 'active_tab'),
+     Input('bar-ar', 'restyleData')
 
-     ]
+     ],
+    [State('escondido', 'children')]
+
 )
-def update_map_ar(ano_select, at):
+def update_map_ar(ano_mem, at, restyleData, data):
     if not dash.callback_context.triggered or at != 'tab-residuais':
         raise PreventUpdate
 
-    df = ar_centro_df
+    try:
+        ano_select = int(json.loads(ano_mem))
+    except (ValueError, TypeError) as e:
+        ano_select = anos_cons[-1]
 
+    df = ar_centro_df
+    if ctx.triggered[0]['prop_id'] == 'bar-ar.restyleData':
+        visivel = ctx.triggered[0]['value'][0]['visible'][0]
+        concelho = ctx.triggered[0]['value'][1][0]
+
+    else:
+        visivel = None
+        concelho = None
+
+    try:
+        memoria = json.loads(data)
+    except ValueError:
+        memoria = {'Lisboa': 'on', 'Outros': 'on'}
+
+    memoria = legend_on_off(concelho, visivel, memoria)
+    # print(memoria)
     bad_df = aguas_r_df.Subsistema.isin(['Total'])
     aguas_r_dff = aguas_r_df[~bad_df]
     df['Lisboa'] = aguas_r_dff.loc[aguas_r_dff.index == ano_select, 'Lisboa'].to_list()
     df['Outros Concelhos'] = aguas_r_dff.loc[aguas_r_dff.index == ano_select, 'Outros Concelhos'].to_list()
     df['Total'] = aguas_r_dff.loc[aguas_r_dff.index == ano_select, 'Total'].to_list()
     df = df.loc[df.et != 'Frielas', :]
-    text_hover = ['<span style="font-weight:bold">ETAR</span>: ' + '{}'.format(etar) +
-                  '   |   ' + '<span style="font-weight:bold">Ano</span>: ' + '{}'.format(ano_select) +
-                  "<br>AR Proveniente de Lisboa: " + '{:.2f}'.format(lisboa) + unidade_1 +
-                  '<br>AR Proveniente de Outros Concelhos: ' + '{:.0f}'.format(concelhos) + unidade_1 +
-                  '<br>Total: ' + '{:.0f}'.format(total) + unidade_1
-                  for etar, lisboa, concelhos, total in
-                  zip(list(df['et']), df['Lisboa'], list(df['Outros Concelhos']),
-                      list(df['Total']))]
+
+    text_hover_base = ['<span style="font-weight:bold">ETAR</span>: ' + '{}'.format(etar) +
+                       '   |   ' + '<span style="font-weight:bold">Ano</span>: ' + '{}'.format(ano_select) for etar in
+                       list(df['et'])]
+    text_hover_lisboa = ["<br>AR Proveniente de Lisboa: " + '{:.2f}'.format(lisboa) + unidade_1 for lisboa in list(df['Lisboa'])]
+    text_hover_outros = ["<br>AR Proveniente de Outros Concelhos: " + '{:.2f}'.format(outros) + unidade_1 for outros in list(df['Outros Concelhos'])]
+    text_hover_total = ["<br>Total: " + '{:.2f}'.format(total) + unidade_1 for total in list(df['Total'])]
+
+    # text_hover = ['<span style="font-weight:bold">ETAR</span>: ' + '{}'.format(etar) +
+    #               '   |   ' + '<span style="font-weight:bold">Ano</span>: ' + '{}'.format(ano_select) +
+    #               "<br>AR Proveniente de Lisboa: " + '{:.2f}'.format(lisboa) + unidade_1 +
+    #               '<br>AR Proveniente de Outros Concelhos: ' + '{:.0f}'.format(concelhos) + unidade_1 +
+    #               '<br>Total: ' + '{:.0f}'.format(total) + unidade_1
+    #               for etar, lisboa, concelhos, total in
+    #               zip(list(df['et']), df['Lisboa'], list(df['Outros Concelhos']),
+    #                   list(df['Total']))]
+
+    if memoria['Lisboa'] == 'on':
+        info_out = 'none'
+        txt_out = ''
+        if memoria['Outros'] == 'on':
+            text_hover = [b + l + o + t for b, l, o, t in zip(text_hover_base,text_hover_lisboa, text_hover_outros, text_hover_total)]
+            sel = [True, True]
+        else:
+            text_hover = [b + l for b, l in zip(text_hover_base,text_hover_lisboa)]
+            sel = [True, False]
+    else:
+
+        if memoria['Outros'] == 'on':
+            text_hover = [b + o for b, o in
+                          zip(text_hover_base, text_hover_outros)]
+            sel = [False, True]
+
+        else:
+            text_hover = ['']
+            sel = [False, False]
+
+        info_out = 'text'
+        txt_out = text_hover
 
     data_trace_1 = dict(
         type='scattermapbox',
@@ -2241,10 +2593,11 @@ def update_map_ar(ano_select, at):
         lat=df['centroid_lat'],
         lon=df['centroid_long'],
         mode='markers',
-        hoverinfo='none',
+        hoverinfo=info_out,
+        hovertext=txt_out,
         showlegend=False,
-        hoverlabel=dict(font=layout['font']),
-        marker=dict(size=df['Outros Concelhos'],
+        # hoverlabel=dict(font=layout['font']),
+        marker=dict(size=df['Lisboa'] + df['Outros Concelhos'],
                     opacity=0.8,
                     sizeref=0.5,
                     sizemin=3,
@@ -2255,17 +2608,39 @@ def update_map_ar(ano_select, at):
 
     layout_map = dict(mapbox_style="light", mapbox_zoom=10.8, mapbox_center={"lat": 38.760129, "lon": -9.159281},
                       mapbox_accesstoken=mapbox_access_token)
+    # print(sel)
+    if sel[0]:
+        if sel[1]:
+            traces = [data_trace_2, data_trace_1]
+        else:
+            traces = [data_trace_1]
+    else:
+        if sel[1]:
+            traces = [data_trace_2]
+        else:
+            traces = [
+                dict(
+                    type='scattermapbox',
+                    lat=[38.760129],
+                    lon=[-9.159281],
+                    mode='text',
+                    hoverinfo=None,
+                    showlegend=False,
+                )
+
+
+            ]
+    # traces = [data_trace_1, data_trace_2]
 
     layout_map['font'] = layout['font']
     layout_map['hovermode'] = 'closest'
-    fig = go.Figure(data=[data_trace_1, data_trace_2], layout=layout_map)
+    fig = go.Figure(data=traces, layout=layout_map)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
 
-    # fig.show()
 
     title = "Águas Residuais Tratadas em {}".format(ano_select)
-    return fig
+    return json.dumps(memoria), fig
 
 
 if __name__ == '__main__':
