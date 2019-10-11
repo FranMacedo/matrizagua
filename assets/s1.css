@@ -128,7 +128,9 @@ body {
   font-family: 'Oswald', sans-serif;
   color: rgb(50, 50, 50);
   background-color: #FFFFFF;
-  margin: 2%;
+  margin-left: 2%;
+  margin-right: 2%;
+
   -webkit-text-size-adjust: auto;
 }
 .pretty_container {
@@ -521,7 +523,9 @@ there.
 @media (min-width: 550px) {}
 
 /* Larger than tablet */
-@media (min-width: 750px) {}
+@media (min-width: 750px) {
+
+}
 
 /* Larger than desktop */
 @media (min-width: 1000px) {}
@@ -632,4 +636,83 @@ display: flex;
   position: fixed;
   transform: translateX(0%)
 }
+
+
+/*SIDEBAR MOVING*/
+
+/*mobile*/
+.sidebar {
+width: 100%;
+margin-top: 0%;
+}
+
+/* Larger than desktop */
+@media (min-width: 1000px) {
+.sidebar {
+position: fixed;
+width: 16.666666666666666666666666666667%;
+margin-top: 0%;
+}
+}
+
+/*BUTOES*/
+
+/*mobile*/
+*bt-cons {
+width: 50%;
+}
+
+*bt-ar {
+width: 33.33333333333333333333333%;
+}
+
+*bt-bal {
+width: 33.33333333333333333333333%;
+}
+
+/* Larger than mobile */
+@media (min-width: 400px) {
+.bt-cons {width: 16.666666666666666666666666666667%;}
+.bt-ar {width: 12.5%;}
+.bt-bal {width: 9.09%;}
+}
+
+@media (min-width: 768px) {
+.bt-bal {width:  25%;}
+}
+
+/* Larger than tablet */
+@media (min-width: 1000px) {
+.bt-cons {width: 33.33333333333333333333333%;}
+.bt-ar {width: 25%;}
+}
+
+/*ecras maiores*/
+@media only screen and (min-width: 1400px) {
+.bt-cons {width: 16.666666666666666666666666666667%;}
+.bt-ar {width: 12.5%;}
+.bt-bal {width: 16.666666666666666666666666666667%;}
+}
+
+@media only screen and (min-width: 1700px) {
+.bt-bal {width: 9.09%;}
+}
+
+
+/* Larger than mobile */
+@media (min-width: 400px) {}
+
+/* Larger than phablet (also point when grid becomes active) */
+@media (min-width: 550px) {}
+
+/* Larger than tablet */
+@media (min-width: 750px) {
+
+}
+
+/* Larger than desktop */
+@media (min-width: 1000px) {}
+
+/* Larger than Desktop HD */
+@media (min-width: 1200px) {}
 
