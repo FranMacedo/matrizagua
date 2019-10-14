@@ -13,7 +13,7 @@ import numpy as np
 from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import openpyxl
-import psycopg2 
+import psycopg2
 
 ctx = dash.callback_context
 
@@ -214,11 +214,11 @@ app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
 
-# app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
-# app.server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-# HEROKU
 app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
-app.server.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://yibvjryninkbcv:28fce500a912b4a78e6277719ed598082c19543ca5a1c394d235e3fe79f641e9@ec2-54-247-171-30.eu-west-1.compute.amazonaws.com:5432/d2719tk9ncf4kl'
+app.server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+# HEROKU - FALTA ADAPTAR ESTES VALORES
+# app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
+# app.server.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://yibvjryninkbcv:28fce500a912b4a78e6277719ed598082c19543ca5a1c394d235e3fe79f641e9@ec2-54-247-171-30.eu-west-1.compute.amazonaws.com:5432/d2719tk9ncf4kl'
 
 app.server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app.server)
@@ -378,7 +378,7 @@ side_bar_cons = html.Div(
                     [create_year_button(ano, 'cons', anos_cons, 'bt-cons') for ano in anos_cons[:-1]] + [create_year_button_last(anos_cons[-1], 'cons', anos_cons, 'bt-cons')],
                     # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1r1em"}
                 ),
-                html.Div(id='mem-year-cons', style={'display': 'none'}),
+                html.Div( id='mem-year-cons', style={'display': 'none'}),
                 dcc.Graph(id="ano-bar-graph", config={'displayModeBar': False}),
                 # html.Div([dcc.Slider(
                 #     id='year-slider',
@@ -523,14 +523,14 @@ freg_container = html.Div([
                         html.Div(dcc.Graph(id='mapa-freguesias', config={'displayModeBar': False}), id="map-freg-container")
                     ), justify='center'
                 )
-            ], width=6),
+            ], md=6),
 
             dbc.Col([
 
 
                     html.Div(dcc.Graph(id='bar-freguesias', config={'displayModeBar': False}), id="bar-freg-container")
 
-            ], width=6
+            ], md=6
             ),
         ], align="center", justify="center"
     ),
@@ -601,9 +601,7 @@ ano_line_container = html.Div(
                                         value="Personalizado",
                                         id="radio-ano-line",
                                         labelStyle={'display': 'inline-block', 'margin-left': '4%'},
-                                        # inline=True,
-                                        # switch=True,
-                                        # inputStyle={'padding': '1.8rem'}
+
 
                                     ),
                                     width=6, align="center", style={'textAlign':"center", 'font-family': family_generico}
@@ -699,9 +697,9 @@ tab_consumo = html.Div(
                                                 ])
                                             ], md=12, align='center')
 
-                                        ],  className='pretty_container', style={'margin-left':'2%'}),
-                                    dbc.Row([freg_container],  style={'margin-left':'2%'})
-                                    ], md={'size': 10}, style={'margin-left': '17%', 'position': 'relative'}
+                                        ],  className='pretty_container'),
+                                    dbc.Row([freg_container])
+                                    ], md={'size': 10}, className='cons-m'
                             )
                         ]),
                         modal_cons,
@@ -1406,7 +1404,7 @@ def update_ano_bar_ar(at, ano_mem):
         Output('bar-freguesias', 'figure')
     ],
     [
-        Input('mem-year-cons', 'chidren'),
+        Input('mem-year-cons', 'children'),
         Input('drop-freg', 'value'),
         Input('multi-tabs', 'active_tab')
      ],
@@ -1418,7 +1416,6 @@ def update_bar_freguesias(ano_mem, drop_select, at):
         ano_select = int(json.loads(ano_mem))
     except (ValueError, TypeError) as e:
         ano_select = anos_cons[-1]
-
     if ano_select < 2017:
         # text_alert = "Ausência de dados para {}".format(str(ano_select))
         return None, {'visibility': 'hidden'}, None, {'visibility': 'hidden'}, {}
@@ -1534,7 +1531,6 @@ def update_mapa_freguesias(ano_mem, drop_select, at):
         ano_select = int(json.loads(ano_mem))
     except (ValueError, TypeError) as e:
         ano_select = anos_cons[-1]
-
     if ano_select < 2017:
         text_alert = "Ausência de dados para {}".format(str(ano_select))
         return {'visibility': 'hidden'}, {'visibility': 'hidden'}, text_alert, True, {}
@@ -1845,7 +1841,7 @@ def update_donut(ano_mem, drop_cons):
     layout_donut['legend'] = go.layout.Legend(
 
         x=0.1,
-        y=1.2,
+        y=1.3,
         xanchor='center',
         traceorder="normal",
         font=dict(
@@ -2548,6 +2544,7 @@ def update_map_ar(ano_mem, at, restyleData, data):
     #                   list(df['Total']))]
 
     if memoria['Lisboa'] == 'on':
+        raio_outros = df['Lisboa'] + df['Outros Concelhos']
         info_out = 'none'
         txt_out = ''
         if memoria['Outros'] == 'on':
@@ -2557,7 +2554,7 @@ def update_map_ar(ano_mem, at, restyleData, data):
             text_hover = [b + l for b, l in zip(text_hover_base,text_hover_lisboa)]
             sel = [True, False]
     else:
-
+        raio_outros = df['Outros Concelhos']
         if memoria['Outros'] == 'on':
             text_hover = [b + o for b, o in
                           zip(text_hover_base, text_hover_outros)]
@@ -2597,7 +2594,7 @@ def update_map_ar(ano_mem, at, restyleData, data):
         hovertext=txt_out,
         showlegend=False,
         # hoverlabel=dict(font=layout['font']),
-        marker=dict(size=df['Lisboa'] + df['Outros Concelhos'],
+        marker=dict(size=raio_outros,
                     opacity=0.8,
                     sizeref=0.5,
                     sizemin=3,
