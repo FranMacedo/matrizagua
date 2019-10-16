@@ -1,3 +1,4 @@
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -14,6 +15,8 @@ from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import openpyxl
 import psycopg2
+from plotly.subplots import make_subplots
+
 
 ctx = dash.callback_context
 
@@ -69,7 +72,10 @@ anos_cons = sector_df.index.unique().tolist()
 anos_ar = aguas_r_df.index.unique().tolist()
 anos_bal = bal_potavel_df.index.unique().tolist()
 
-
+populacao = pd.Series(
+    [563312, 550466, 549210, 542917, 530847, 520549, 513064, 506892, 504718, 505526, 506654],
+    index=[2001, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018],
+)
 
 max_sector_total = math.ceil(sector_df.iloc[:,:-1].max().max()/1000)
 size_small = 192
@@ -83,7 +89,8 @@ color_sector_live_d = {"Doméstico": color_live[0],
                     "Câmara Municipal de Lisboa": color_live[4],
                     "Juntas de Freguesia": color_live[5],
                        "Perdas económicas": color_live[6],
-                       "Total": "#8F9090"
+                       "Total": "#8F9090",
+                       "Doméstico Per Capita": color_live[7]
                        }
 
 color_sector_dead_d = {"Doméstico": color_dead[0],
@@ -93,7 +100,8 @@ color_sector_dead_d = {"Doméstico": color_dead[0],
                     "Câmara Municipal de Lisboa": color_dead[4],
                     "Juntas de Freguesia": color_dead[5],
                        "Perdas económicas": color_dead[6],
-                       "Total": "#8F9090"
+                       "Total": "#8F9090",
+                       "Doméstico Per Capita": color_dead[7]
                        }
 
 color_ndom_live_d = {
@@ -166,7 +174,8 @@ color_ar_dead_d = {
 sector_options = [{'label': sect,
                       'value': str(sect_val)}
                      for sect, sect_val in zip(sector_df.columns.to_list(), sector_df.columns.to_list())]
-
+sector_options = sector_options + [{'label': 'Doméstico Per Capita', 'value': 'Doméstico Per Capita'}]
+sector_options = sorted(sector_options, key=lambda k: k['label'])
 
 ndom_options = [{'label': sect,
                       'value': str(sect_val)}
@@ -366,12 +375,22 @@ collapse_side_cons = html.Div(
         ),
     ], style={'font-family': family_generico, 'margin-bottom':'2%'},
 )
-
+pop_radio = html.Div(dcc.RadioItems(
+    options=[
+        {"label": "Total", "value": 1},
+        {"label": "Per Capita", "value": 2},
+    ],
+    value=1,
+    labelStyle={'display': 'inline-block', 'margin-left': '4%', 'margin-top': '4%'},
+    id="radio-pop",
+), style={'textAlign': "center", 'font-family': family_generico})
 
 side_bar_cons = html.Div(
             [
-                html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
-                        style=TITLE_STYLE),
+                pop_radio,
+                html.Hr(),
+                html.H5('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
+                        style=TITLE_STYLE, id='head-ano-bar-cons'),
                 html.P(dcc.Markdown('''**Seleccione o ano pretendido:**'''), style=INSTRUCTION_STYLE_center),
 
                 html.Div(
@@ -896,8 +915,8 @@ ar_1_container = html.Div([
     ], justify='center'),
 
     dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-ar', config={'displayModeBar': False}), width=6),
-        dbc.Col(dcc.Graph(id='map-ar', config={'displayModeBar': False}), width=6)
+        dbc.Col(dcc.Graph(id='bar-ar', config={'displayModeBar': False}), lg=6),
+        dbc.Col(dcc.Graph(id='map-ar', config={'displayModeBar': False}), lg=6)
     ], justify='center'),
     collapse_ar,
 
@@ -1033,6 +1052,16 @@ tabs = dbc.Tabs(
     # style={"position": "fixed", "z-index": "1"}
 )
 
+@app.callback(
+    Output("collapse", "is_open"),
+    [Input("toggle", "n_clicks")],
+    [State("collapse", "is_open")],
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 @server.route("/download/<path:path>")
 def download(path):
     """Serve a file from the upload directory."""
@@ -1041,8 +1070,18 @@ def download(path):
 
 app.layout = html.Div([
 
-
-        tabs,
+    html.Button(
+        # use the Bootstrap navbar-toggler classes to style the toggle
+        html.Span(className="navbar-toggler-icon"),
+        className="navbar-toggler",
+        # the navbar-toggler classes don't set color, so we do it here
+        style={
+            "color": "rgba(0,0,0,.5)",
+            "border-color": "rgba(0,0,0,.1)",
+        },
+        id="toggle",
+    ),
+        dbc.Collapse(tabs, id="collapse"),
         html.Div(id='tabs-content'),
 
 
@@ -1241,12 +1280,15 @@ for tab in ids_modal:
 
 
 
-def create_ano_bar_graph(df, ano_select):
+def create_ano_bar_graph(df, ano_select, per_capita):
     """
     O formato de df deve mesmo ser uma pd.DataFrame, nao uma pd.series
     A coluna deve-se chamar 'Total' e os valores devem estar em 10^3 m3
 
     """
+
+    if per_capita == None:
+        per_capita == 1
     layout_ano_bar = copy.deepcopy(layout)
     # ano_select = 2017
     # df = bal_potavel_df
@@ -1254,12 +1296,25 @@ def create_ano_bar_graph(df, ano_select):
     color_fill = ['#9BD7F1', ] * len(df.index)
     color_fill[ano_posi] = '#029CDE'
     color_line = ['#029CDE', ] * len(df.index)
+    if per_capita == 2:
+        df['pop'] = populacao
+        df['Total'] = (df['Total']*1000)/populacao
+        unidade = "m\u00b3" + ' per capita'
+        text_un = ' mil litros per capita'
 
-    text_hover = ['Total: ' + '{:.2f}'.format(tr / 1000) + ' | ' + unidade_1 + '<br>Ano: ' + '{}'.format(an)
-                  for tr, an in zip(list(df['Total']), list(df.index))]
+        text_hover = ['Total: ' + '{:.0f}'.format(tr) + text_un + '<br>Ano: ' + '{}'.format(an)
+                      for tr, an in zip(list(df['Total']), list(df.index))]
 
-    text_write = ['{:.0f}'.format(tr / 1000) + "M"
-                  for tr in list(df['Total'])]
+        text_write = ['{:.0f}'.format(tr)
+                      for tr in list(df['Total'])]
+    else:
+
+
+        text_hover = ['Total: ' + '{:.2f}'.format(tr / 1000) + ' | ' + unidade_1 + '<br>Ano: ' + '{}'.format(an)
+                      for tr, an in zip(list(df['Total']), list(df.index))]
+
+        text_write = ['{:.0f}'.format(tr / 1000) + "M"
+                      for tr in list(df['Total'])]
 
     fig = go.Figure(data=[go.Bar(
         x=df.index,
@@ -1298,18 +1353,19 @@ def create_ano_bar_graph(df, ano_select):
 #         return int(ano_bar_graph_selected['points'][0]['x'])
 
 @app.callback(
-
-
-    Output("ano-bar-graph", "figure"),
-
+    [
+        Output('head-ano-bar-cons', 'children'),
+        Output("ano-bar-graph", "figure"),
+    ],
     [
         # Input("year-slider", "value"),
      Input('multi-tabs', 'active_tab'),
      Input("mem-year-cons", "children"),
+     Input('radio-pop', 'value')
 
      ]
 )
-def update_ano_bar_cons(at, ano_mem):
+def update_ano_bar_cons(at, ano_mem, per_capita):
     if not ctx.triggered or at != 'tab-consumo':
         raise PreventUpdate
     try:
@@ -1317,7 +1373,13 @@ def update_ano_bar_cons(at, ano_mem):
     except (ValueError, TypeError) as e:
         ano = anos_cons[-1]
     # print(ano)
-    return create_ano_bar_graph(sector_df, ano)
+    df = copy.deepcopy(sector_df)
+    if per_capita == 2:
+        title = 'Consumo Total Anual de Água, em Lisboa (milhares de litros per capita)'
+    else:
+        title = 'Consumo Total Anual de Água, em Lisboa ({})'.format(unidade)
+
+    return title, create_ano_bar_graph(df, ano, per_capita)
 #
 #
 # @app.callback(
@@ -1349,7 +1411,7 @@ def update_ano_bar_bal(at, ano_mem):
     df = df.rename({'value': 'Total'}, axis='columns')
     df = df*1000
 
-    return create_ano_bar_graph(df, ano)
+    return create_ano_bar_graph(df, ano, 1)
 
 # @app.callback(
 #     Output("year-slider-bal", "value"),
@@ -1381,7 +1443,7 @@ def update_ano_bar_ar(at, ano_mem):
     df = df[~bad_df]
     df = df.loc[df.Subsistema == 'Total - Água Tratada', 'Total'].to_frame()
     df = df*1000
-    fig = create_ano_bar_graph(df, ano)
+    fig = create_ano_bar_graph(df, ano, 1)
     fig.update_layout(xaxis_tickangle=-80)
     return fig
 #
@@ -1865,9 +1927,10 @@ def update_donut(ano_mem, drop_cons):
      Input('multi-tabs', 'active_tab'),
      Input('drop-cons', 'value'),
      Input('radio-ano-line', 'value'),
-    ]
+    ],
+    [State('drop-ano-line', 'value')]
 )
-def update_ano_line_drop(at, drop_cons, selector):
+def update_ano_line_drop(at, drop_cons, selector, current_drop_cons):
     if not dash.callback_context.triggered or at != 'tab-consumo':
         raise PreventUpdate
     if drop_cons == "consumo_sector":
@@ -1880,7 +1943,8 @@ def update_ano_line_drop(at, drop_cons, selector):
             value = ['Total']
         else:
             value = []
-
+        if 'Doméstico' in current_drop_cons:
+            value = value + ['Doméstico Per Capita']
     else:
 
         items = ndom_options
@@ -1911,12 +1975,14 @@ def update_ano_line(drop_tipo, at, drop_cons):
 
     if not dash.callback_context.triggered or at != 'tab-consumo':
         raise PreventUpdate
-    if drop_cons == "consumo_sector":
 
-        if not all(elem in sector_df.columns.to_list() for elem in drop_tipo):
+    if drop_cons == "consumo_sector":
+        df = copy.deepcopy(sector_df)
+        df['Doméstico Per Capita'] = df['Doméstico']*1000/populacao
+        if not all(elem in df.columns.to_list() for elem in drop_tipo):
             raise PreventUpdate
 
-        df = sector_df[drop_tipo]/1000
+        df = df[drop_tipo]/1000
         lista_index = list(df.sum().sort_values().index)
         color_line = [color_sector_live_d[x] for x in lista_index]
         color_fill = [color_sector_dead_d[x] for x in lista_index]
@@ -1937,48 +2003,89 @@ def update_ano_line(drop_tipo, at, drop_cons):
         sector_tipo_inst = "Filtrar por tipo de utilização:"
 
     layout_ano_line = copy.deepcopy(layout)
-    fig = go.Figure()
+    if 'Doméstico Per Capita' in drop_tipo:
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+    else:
+        fig = go.Figure()
     i = 0
     anos = df.index.unique().tolist()
 
     minimos = []
     maximos = []
     for trace in lista_index:
-        my_text = [trace + ': ' + '{:.1f}'.format(tr) + ' | ' + unidade_1 + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
+        if trace == 'Doméstico Per Capita':
 
-        df_trace = df[[trace]]
-        # minimo = min(df_trace)
+            df[trace] = df[trace]*1000
+            my_text = [trace + ': ' + '{:.1f}'.format(tr) + ' | ' + unidade + ' per capita' + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
+            df_trace = df[[trace]]
+            # minimo = min(df_trace)
+            #
+            minimo_capita = min(df_trace[trace].tolist())
+            maximo_capita = max(df_trace[trace].tolist())
 
-        minimo=min(df_trace[trace].tolist())
-        maximo=max(df_trace[trace].tolist())
-        minimos.append(minimo)
-        maximos.append(maximo)
-        if False in (df_trace.T != 0).any().tolist():
-
-            df_trace.replace(0, np.nan, inplace=True)
-            # anos = df_trace.index.unique().tolist()
-        fig.add_trace(
-            go.Scatter(x=anos,
-                       y=df_trace[trace],
-                       name=trace,
-                       mode='lines+markers',
-                       # line_color=color_line[i],
-                       hovertext=my_text,
-                       hoverinfo="text",
-                       hoverlabel=dict(
-                                        bgcolor=color_fill[i],
-                                        # font=dict(size=13)
-                                    ),
-                       line=dict(
-                                    shape="spline",
-                                    smoothing=1,
-                                    width=2,
-                                    color=color_line[i]
-                       ),
-                       marker=dict(symbol='hexagon2-dot')
+            if False in (df_trace.T != 0).any().tolist():
+                df_trace.replace(0, np.nan, inplace=True)
+                # anos = df_trace.index.unique().tolist()
+            fig.add_trace(
+                go.Scatter(x=anos,
+                           y=df_trace[trace],
+                           name=trace,
+                           mode='lines+markers',
+                           # line_color=color_line[i],
+                           hovertext=my_text,
+                           hoverinfo="text",
+                           hoverlabel=dict(
+                               bgcolor=color_fill[i],
+                               # font=dict(size=13)
+                           ),
+                           line=dict(
+                               shape="spline",
+                               smoothing=1,
+                               width=2,
+                               color=color_line[i]
+                           ),
+                           marker=dict(symbol='hexagon2-dot')
+                           ),
+                secondary_y=True,
             )
-        )
-        i += 1
+            i += 1
+
+        else:
+            my_text = [trace + ': ' + '{:.1f}'.format(tr) + ' | ' + unidade_1 + "<br>Ano: " + str(ano) for tr, ano in zip(list(df[trace]), anos)]
+
+            df_trace = df[[trace]]
+            # minimo = min(df_trace)
+
+            minimo=min(df_trace[trace].tolist())
+            maximo=max(df_trace[trace].tolist())
+            minimos.append(minimo)
+            maximos.append(maximo)
+            if False in (df_trace.T != 0).any().tolist():
+
+                df_trace.replace(0, np.nan, inplace=True)
+                # anos = df_trace.index.unique().tolist()
+            fig.add_trace(
+                go.Scatter(x=anos,
+                           y=df_trace[trace],
+                           name=trace,
+                           mode='lines+markers',
+                           # line_color=color_line[i],
+                           hovertext=my_text,
+                           hoverinfo="text",
+                           hoverlabel=dict(
+                                            bgcolor=color_fill[i],
+                                            # font=dict(size=13)
+                                        ),
+                           line=dict(
+                                        shape="spline",
+                                        smoothing=1,
+                                        width=2,
+                                        color=color_line[i]
+                           ),
+                           marker=dict(symbol='hexagon2-dot')
+                ),
+            )
+            i += 1
     try:
 
         smaller = min(minimos)
@@ -2014,7 +2121,16 @@ def update_ano_line(drop_tipo, at, drop_cons):
     layout_ano_line['showlegend'] = True
     # , range = y_span
     fig.update_layout(layout_ano_line)
-    fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF", range = y_span)
+    print(drop_tipo)
+    if 'Doméstico Per Capita' in drop_tipo:
+        print('catest')
+        fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, range = y_span, gridcolor="#E0E1DF",
+                          secondary_y=False)
+        fig.update_yaxes(title_text="{} per capita".format(unidade), showgrid=True,
+                          secondary_y=True, overlaying='y1', range=[50.6, 55.39])
+    else:
+        fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF")
+
     fig.update_xaxes(showgrid=False)
     # fig.show()
     # fig.update_yaxes(showgrid=False)
@@ -2643,4 +2759,4 @@ def update_map_ar(ano_mem, at, restyleData, data):
 if __name__ == '__main__':
     # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
     app.run_server(debug=True)
-    # app.run_server(port=8080)
+#     app.run_server(debug=True, port=8080)
