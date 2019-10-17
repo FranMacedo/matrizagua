@@ -215,11 +215,12 @@ FONT_AWESOME = "https://use.fontawesome.com/releases/v5.10.2/css/all.css"
 
 external_stylesheets = [dbc.themes.BOOTSTRAP, FONT_AWESOME]
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, 
-                meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-    ],
-               )
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
+
+meta_tags = [
+                {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+            ],
+                )
 # para prevenir erros
 app.config['suppress_callback_exceptions'] = True
 server = app.server
@@ -229,7 +230,7 @@ app.scripts.config.serve_locally = True
 
 # app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
 # app.server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-# HEROKU 
+# HEROKU - FALTA ADAPTAR ESTES VALORES
 app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
 app.server.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://yibvjryninkbcv:28fce500a912b4a78e6277719ed598082c19543ca5a1c394d235e3fe79f641e9@ec2-54-247-171-30.eu-west-1.compute.amazonaws.com:5432/d2719tk9ncf4kl'
 
@@ -392,8 +393,8 @@ pop_radio = html.Div(dcc.RadioItems(
 side_bar_cons = html.Div(
             [
                 pop_radio,
-                html.Hr(),
-                html.H5('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
+                html.Hr(className='blurb2'),
+                html.H6('Consumo Total Anual de Água, em Lisboa ({})'.format(unidade),
                         style=TITLE_STYLE, id='head-ano-bar-cons'),
                 html.P(dcc.Markdown('''**Seleccione o ano pretendido:**'''), style=INSTRUCTION_STYLE_center),
 
@@ -402,7 +403,10 @@ side_bar_cons = html.Div(
                     # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1r1em"}
                 ),
                 html.Div( id='mem-year-cons', style={'display': 'none'}),
-                dcc.Graph(id="ano-bar-graph", config={'displayModeBar': False}),
+                dcc.Loading(type="circle",
+                            style={'margin': '30%'},
+
+                            children= dcc.Graph(id="ano-bar-graph", config={'displayModeBar': False}),),
                 # html.Div([dcc.Slider(
                 #     id='year-slider',
                 #     min=sector_df.index.min(),
@@ -429,7 +433,11 @@ side_bar_bal = html.Div(
                     # style={'textAlign': "center", "margin-left": "1rem", "margin-right": "1rem", "padding": "1rem 1rem"}
                 ),
                 html.Div(id='mem-year-bal', style={'display': 'none'}),
-                dcc.Graph(id="ano-bar-graph-bal", config={'displayModeBar': False}),
+
+                dcc.Loading(type="circle",
+                            style={'margin': '20%'},
+                            children=dcc.Graph(id="ano-bar-graph-bal", config={'displayModeBar': False})
+                            )   ,
                 # html.Div([dcc.Slider(
                 #     id='year-slider-bal',
                 #     min=bal_potavel_df.index.min(),
@@ -455,7 +463,9 @@ side_bar_ar = html.Div(
         ),
         html.Div(id='mem-year-ar', style={'display': 'none'}),
 
-        dcc.Graph(id="ano-bar-graph-ar", config={'displayModeBar': False}),
+        dcc.Loading(type="circle",
+                    style={'margin': '30%'},
+                    children=dcc.Graph(id="ano-bar-graph-ar", config={'displayModeBar': False})),
         # html.Div([dcc.Slider(
         #     id='year-slider-ar',
         #     min=aguas_r_df.index.min(),
@@ -506,7 +516,7 @@ id='link-dummy'
 
 freg_container = html.Div([
     dbc.Row([
-        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
         dbc.Col([
             html.Div([dbc.Row([html.H6(id="header-freg", style=TITLE_STYLE), download_button_freg], align="center",
                               justify="center", no_gutters=True)], id='freg-title-geral'),
@@ -516,8 +526,8 @@ freg_container = html.Div([
                      is_open=False,
                      style={'textAlign': 'center', 'font-family': family_generico}
                  ),
-        ], width=7, align='center'),
-        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+        ], lg=7, align='center'),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
     ], justify='center'),
 
     html.Div([dbc.Row([
@@ -534,7 +544,7 @@ freg_container = html.Div([
                     clearable=False,
                     style={'font-family': family_generico, 'margin-bottom': '2%'}
                 ),
-            ], width=6)
+            ], lg=6)
         ], justify='center'),
     ], id="drop-freg-container"),
     dbc.Row(
@@ -543,17 +553,29 @@ freg_container = html.Div([
             dbc.Col([
                 dbc.Row(
                     dbc.Col(
-                        html.Div(dcc.Graph(id='mapa-freguesias', config={'displayModeBar': False}), id="map-freg-container")
+                        html.Div(
+
+                            dcc.Loading(type="circle",
+                                        style={'margin-left': '0%', 'margin-top': '20%'},
+                                        children= dcc.Graph(id='mapa-freguesias', config={'displayModeBar': False})
+                                        ), id="map-freg-container")
                     ), justify='center'
                 )
-            ], md=6),
+            ], lg=6),
 
             dbc.Col([
 
 
-                    html.Div(dcc.Graph(id='bar-freguesias', config={'displayModeBar': False}), id="bar-freg-container")
+                    html.Div(
 
-            ], md=6
+                        dcc.Loading(type="circle",
+                                    style={'margin-left': '0%', 'margin-top': '20%'},
+                                    children=dcc.Graph(id='bar-freguesias', config={'displayModeBar': False})
+                                    ), id="bar-freg-container"
+
+                    )
+
+            ], lg=6
             ),
         ], align="center", justify="center"
     ),
@@ -583,7 +605,9 @@ donut_container = html.Div(
                             # , tanks
                             html.H6(id="header-donut", style=TITLE_STYLE),
 
-                            dcc.Graph(id='donut-sector', config={'displayModeBar': False}),
+                            dcc.Loading(type="circle",
+                                        style={'margin': '30%'},
+                                        children= dcc.Graph(id='donut-sector', config={'displayModeBar': False})),
                             collapse_donut,
 
                          ],
@@ -627,7 +651,7 @@ ano_line_container = html.Div(
 
 
                                     ),
-                                    width=6, align="center", style={'textAlign':"center", 'font-family': family_generico}
+                                    md=6, align="center", style={'textAlign':"center", 'font-family': family_generico}
 
 
                                 ),
@@ -638,11 +662,14 @@ ano_line_container = html.Div(
                                         clearable=False,
                                         multi=True,
                                         style={'font-family': family_generico}
-                                    ), width=6, align="center"
+                                    ), md=6, align="center"
 
                                 ),
                             ], justify='center'),
-                         dcc.Graph(id='ano-line-graph', config={'displayModeBar': False})
+
+                            dcc.Loading(type="circle",
+                                        style={'margin-left': '0%', 'margin-top': '12%'},
+                                        children= dcc.Graph(id='ano-line-graph', config={'displayModeBar': False}))
                          ],
                         )
 
@@ -665,9 +692,11 @@ download_button_consumo = html.Div(
 
 header_consumo = html.Div([
                             dbc.Row([
-                                dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável", style={'textAlign': 'Center', 'font-family': family_generico}), info_button_consumo, download_button_consumo], align="center", justify="center", no_gutters=True), width=5, align="center"),
-                                dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                                dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
+                                dbc.Col(dbc.Row([html.H6("Consumo de Água Potável",
+                                                         style={'textAlign': 'Center', 'font-family': family_generico}),
+                                                 info_button_consumo, download_button_consumo], align="center", justify="center", no_gutters=True), md=5, align="center"),
+                                dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
                             ], justify="center"),
 
@@ -686,7 +715,7 @@ header_consumo = html.Div([
                                         clearable=False,
                                         style={'font-family': family_generico}
                                     ),
-                                ], width=6, align='center'),
+                                ], md=6, align='center'),
                                 # dbc.Col([html.Div(className='vl', style={'height': 'inherit'})]),
                             ], justify='center'),
 
@@ -715,14 +744,14 @@ tab_consumo = html.Div(
                                                 ]),
 
                                                 dbc.Row([
-                                                        dbc.Col(donut_container, md=5),
-                                                        dbc.Col(ano_line_container, md=7)
+                                                        dbc.Col(donut_container, lg=5),
+                                                        dbc.Col(ano_line_container, lg=7)
                                                 ])
-                                            ], md=12, align='center')
+                                            ], lg=12, align='center')
 
                                         ],  className='pretty_container'),
                                     dbc.Row([freg_container])
-                                    ], md={'size': 10}, className='cons-m'
+                                    ], lg=10, md=8, className='cons-m'
                             )
                         ]),
                         modal_cons,
@@ -786,20 +815,25 @@ bal_container = html.Div([
             [
                 dbc.Row(
                     [
-                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
-                        dbc.Col(dbc.Row([html.H6(id='bal-header', style=TITLE_STYLE), download_button_balanco], align='center', justify='center', no_gutters=True), width=6, align='center'),
-                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                        dbc.Col(dbc.Row([html.H6(id='bal-header', style=TITLE_STYLE), download_button_balanco], align='center', justify='center', no_gutters=True), lg=6, align='center'),
+                        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
                     ], align="center", justify="center"),
-                dcc.Graph(figure={'layout': {'autosize': True}}, id='bal-potavel',
-                      hoverData={'points': [
-                          {'group': False, 'pointNumber': 5, 'label': 'Água para consumo humano: 93.5', 'color': '#ccbbaf',
-                           'index': 5, 'value': 93.5, 'depth': 0, 'height': 3, 'x0': 0, 'x1': 30, 'y0': 2.433608869978343e-13,
-                           'y1': 270, 'originalX': 15, 'originalY': 135.0000000000001, 'originalLayerIndex': 0,
-                           'originalLayer': 0, 'dx': 30, 'dy': 269.9999999999998, 'curveNumber': 0}]}, config={'displayModeBar': False},
+
+                dcc.Loading(type="circle",
+                            style={'margin': '20%'},
+                            children=dcc.Graph(
+                                figure={'layout': {'autosize': True}}, id='bal-potavel',
+                                hoverData={'points': [
+                                    {'group': False, 'pointNumber': 5, 'label': 'Água para consumo humano: 93.5', 'color': '#ccbbaf',
+                                    'index': 5, 'value': 93.5, 'depth': 0, 'height': 3, 'x0': 0, 'x1': 30, 'y0': 2.433608869978343e-13,
+                                    'y1': 270, 'originalX': 15, 'originalY': 135.0000000000001, 'originalLayerIndex': 0,
+                                    'originalLayer': 0, 'dx': 30, 'dy': 269.9999999999998, 'curveNumber': 0}]}, config={'displayModeBar': False},
                       # style={'width': 1000}
-                      ),
+                      )
+                            ),
                 collapse_bal,
 
                 html.Hr()
@@ -811,16 +845,16 @@ bal_container = html.Div([
             [
                 dbc.Row(
                     [
-                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
-                    dbc.Col(html.H6('Variação Anual dos Diferentes Fluxos de Água', style=TITLE_STYLE), width=6, align='center'),
+                    dbc.Col(html.H6('Variação Anual dos Diferentes Fluxos de Água', style=TITLE_STYLE), lg=6, align='center'),
 
-                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
             ], justify="center"),
 
                 dbc.Row([
-                    dbc.Col(dcc.Markdown('''**Filtrar por fluxo de água:**'''), width=2, align="center", style=INSTRUCTION_STYLE_right),
+                    dbc.Col(dcc.Markdown('''**Filtrar por fluxo de água:**'''), lg=2, align="center", style={'font-family': family_generico, 'font-style': 'italic'}, className='textbl'),
                     dbc.Col(
                         dcc.RadioItems(
                             options=[
@@ -835,7 +869,7 @@ bal_container = html.Div([
                             # switch=True,
 
                         ),
-                        width=3, align="center", style={'textAlign': "center", 'font-family': family_generico}
+                        lg=3, align="center", style={'textAlign': "center", 'font-family': family_generico}
 
                     ),
                     dbc.Col(
@@ -846,7 +880,7 @@ bal_container = html.Div([
                             clearable=False,
                             multi=True,
                             style={'font-family': family_generico}
-                        ), width=6
+                        ), lg=6
                     ),
                 ], justify='center', align="start", no_gutters=True),
                 dcc.Graph(id='bal-timeseries', config={'displayModeBar': False})]
@@ -913,14 +947,23 @@ download_button_ar = html.Div(
 
 ar_1_container = html.Div([
     dbc.Row([
-        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar, download_button_ar], align="center", justify="center", no_gutters=True), width=8, align='center'),
-        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb2'),
+        dbc.Col(dbc.Row([html.H6(id="header-bar-ar", style=TITLE_STYLE), info_button_ar, download_button_ar], align="center", justify="center", no_gutters=True), align='center', className='title-blurb'),
+        dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb2'),
     ], justify='center'),
 
     dbc.Row([
-        dbc.Col(dcc.Graph(id='bar-ar', config={'displayModeBar': False}), lg=6),
-        dbc.Col(dcc.Graph(id='map-ar', config={'displayModeBar': False}), lg=6)
+        dbc.Col(
+            dcc.Loading( type="circle",
+                        style={'margin': '40%'},
+                        children=dcc.Graph(id='bar-ar', config={'displayModeBar': False})
+                        ),
+            lg=6),
+        dbc.Col(
+            dcc.Loading(type="circle",
+                        style={'margin': '40%'},
+                        children=dcc.Graph(id='map-ar', config={'displayModeBar': False})
+                        ), lg=6)
     ], justify='center'),
     collapse_ar,
 
@@ -965,14 +1008,14 @@ collapse_ar_2 = html.Div(
 )
 ar_2_container = html.Div(
                 [   dbc.Row([
-                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
-                    dbc.Col(dbc.Row([html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), info_button_ar_2], align="center", justify="center", no_gutters=True), width=8, align="center"),
-                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center"),
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
+                    dbc.Col(dbc.Row([html.H6("Evolução anual de água tratada e reutilizada em Lisboa", style=TITLE_STYLE), info_button_ar_2], align="center", justify="center", no_gutters=True), md=8, align="center"),
+                    dbc.Col(html.Hr(), style={'width': 'inherit'}, width=2, align="center", className='blurb'),
 
                 ], justify='center'),
                     dbc.Row([
-                    dbc.Col(dcc.Markdown('''**Filtrar por tipo de fluxo:**'''), align="center", width=3, style=INSTRUCTION_STYLE_left),
-                    dbc.Col(dcc.Markdown('''**Personalizar:**'''), align="center",width={"size": 3, "offset": 1}, style=INSTRUCTION_STYLE_center),
+                    dbc.Col(dcc.Markdown('''**Filtrar por tipo de fluxo:**'''), align="center", width=6, style=INSTRUCTION_STYLE_center, className='blurb3'),
+                    dbc.Col(dcc.Markdown('''**Personalizar:**'''), align="center",width={"size": 6}, style=INSTRUCTION_STYLE_center, className='blurb3'),
 
                     ], justify='center', align="start", no_gutters=True),
                     dbc.Row([
@@ -994,7 +1037,7 @@ ar_2_container = html.Div(
                                 labelStyle={'display': 'inline-block', 'margin-left': '4%'},
 
                             ),
-                            width=4, style={'font-family': family_generico}
+                            md=6, style={'font-family': family_generico}
                         ),
                         dbc.Col(
                             dcc.Dropdown(
@@ -1004,10 +1047,13 @@ ar_2_container = html.Div(
                                 clearable=False,
                                 multi=True,
                                 style={'font-family': family_generico}
-                            ), width=6
+                            ), md=6
                         ),
                     ], justify='center', align="start", no_gutters=True),
-                    dbc.Col(dcc.Graph(id='ar-timeseries', config={'displayModeBar': False}), width=12),
+                    dbc.Col(
+                        dcc.Graph(id='ar-timeseries', config={'displayModeBar': False}),
+
+                        width=12),
                     collapse_ar_2
                 ], style={"padding": "0% 1% 1% 1%", "margin-left": "1%", "margin-top": "1%"})
 
@@ -1999,7 +2045,6 @@ def update_ano_line(drop_tipo, at, drop_cons):
 
         df = ndom_df[drop_tipo]/1000000
 
-
         lista_index = list(df.sum().sort_values().index)
         color_line = [color_ndom_live_d[x] for x in lista_index]
         color_fill = [color_ndom_dead_d[x] for x in lista_index]
@@ -2125,9 +2170,8 @@ def update_ano_line(drop_tipo, at, drop_cons):
     layout_ano_line['showlegend'] = True
     # , range = y_span
     fig.update_layout(layout_ano_line)
-    print(drop_tipo)
+
     if 'Doméstico Per Capita' in drop_tipo:
-        print('catest')
         fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, range = y_span, gridcolor="#E0E1DF",
                           secondary_y=False)
         fig.update_yaxes(title_text="{} per capita".format(unidade), showgrid=True,
@@ -2237,6 +2281,8 @@ def update_timeseries(drop_bal):
 
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(title_text="Milhões de {}".format(unidade), showgrid=True, gridcolor="#E0E1DF")
+    fig.update_layout(margin={"r": 10, "t": 10, "l": 10, "b": 10})
+
     return fig
 # fig.show()
 
@@ -2463,6 +2509,7 @@ def update_ar_timeseries(drop_ar, at):
     fig.update_layout(barmode='group', xaxis_tickangle=-45, showlegend=True)
     fig.update_xaxes(type='category', showgrid=True)
     fig.update_yaxes(title_text=title, showgrid=True, gridcolor="#E0E1DF", range = y_span)
+    fig.update_layout(margin={"r": 10, "t": 10, "l": 10, "b": 10})
     return fig
     # fig.show()
 
@@ -2541,6 +2588,8 @@ def update_bar_ar(ano_mem, at):
     fig.update_layout(barmode='group', xaxis_tickangle=-45)
     fig.update_yaxes(automargin=True, range=[0, altura_int* 1.15],
                      autorange=False, fixedrange=True, showticklabels=False, title_text="Milhões de {}".format(unidade))
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+
 
     # fig.show()
     alcantara_perc = round(df.loc[df.Subsistema=='Alcântara', 'Total']/df['Total'].sum()*100,1).values[0]
