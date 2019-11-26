@@ -1117,6 +1117,25 @@ def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory("data", path, as_attachment=True)
 
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>Matriz de Água</title>
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 app.layout = html.Div([
 
