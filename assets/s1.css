@@ -707,12 +707,12 @@ margin-top: 0%;
 @media (min-width: 1000px) {
 .sidebar {
 position: fixed;
-width: 16.666666666666666666666666666667%;
+width: 15.5%;
 margin-top: 0%;
 }
 
 .cons-m {
-            margin-left: 18%;
+            margin-left: 16%;
             position: relative;
 }
 }
