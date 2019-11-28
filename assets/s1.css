@@ -663,7 +663,7 @@ width: 33.33333333333333333333333%;
 }
 
 /*ecras maiores*/
-@media (min-width: 1400px) {
+@media (min-width: 1700px) {
 .bt-ar {width: 12.5%;}
 .bt-bal {width: 16.666666666666666666666666666667%;}
 .bt-cons {width: 16.666666666666666666666666666667%;}
@@ -679,15 +679,34 @@ width: 33.33333333333333333333333%;
 
 /*mobile*/
 .sidebar {
+width: 50%;
+position: static;
+margin-left: 0%
+margin-right: 0;
+}
+
+.cons-m {
 width: 100%;
+
+margin-left: 0%
+margin-right: 0;
+
+}
+
+
+@media (min-width: 768px) {
+.sidebar {
+position: fixed;
+width: 30%;
 margin-top: 0%;
 }
 
 .cons-m {
-margin-left: 0%
-width: 100%
-}
+            margin-left: 32%;
+            position: relative;
 
+}
+}
 
 
 /* Larger than desktop */
@@ -704,10 +723,10 @@ margin-top: 0%;
 }
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1200px) {
 .sidebar {
 position: fixed;
-width: 15.5%;
+width: 15%;
 margin-top: 0%;
 }
 
@@ -716,6 +735,7 @@ margin-top: 0%;
             position: relative;
 }
 }
+
 
 /* MARGEM ESQUERDA*/
 
