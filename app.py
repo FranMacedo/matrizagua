@@ -25,6 +25,7 @@ family_generico = "'Abel', sans-serif"
 size_generico = 15
 cl_scale_blues = [[0, '#c6dbf7'], [1, '#165bb8']]
 
+
 layout = dict(
     font=dict(
         size=size_generico,
@@ -228,7 +229,7 @@ app.scripts.config.serve_locally = True
 
 # app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
 # app.server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-# HEROKU 
+# HEROKU - FALTA ADAPTAR ESTES VALORES
 app.server.config['SECRET_KEY'] = '60b69ea75d65bfc586c4e778a9357219'
 app.server.config[
     'SQLALCHEMY_DATABASE_URI'] = 'postgres://yibvjryninkbcv:28fce500a912b4a78e6277719ed598082c19543ca5a1c394d235e3fe79f641e9@ec2-54-247-171-30.eu-west-1.compute.amazonaws.com:5432/d2719tk9ncf4kl'
@@ -567,7 +568,7 @@ freg_container = html.Div([
                                         ), id="map-freg-container")
                     ), justify='center'
                 )
-            ], lg=6),
+            ], xl=6),
 
             dbc.Col([
 
@@ -580,7 +581,7 @@ freg_container = html.Div([
 
                 )
 
-            ], lg=6
+            ], xl=6
             ),
         ], align="center", justify="center"
     ),
@@ -747,14 +748,14 @@ tab_consumo = html.Div(
                                 ]),
 
                                 dbc.Row([
-                                    dbc.Col(donut_container, lg=5),
-                                    dbc.Col(ano_line_container, lg=7)
+                                    dbc.Col(donut_container, xl=6),
+                                    dbc.Col(ano_line_container, xl=6)
                                 ])
                             ], lg=12, align='center')
 
                         ], className='pretty_container'),
                     dbc.Row([freg_container])
-                ], lg=10, md=8, className='cons-m'
+                ], xl=10, md=8, className='cons-m'
             )
         ]),
         modal_cons,
@@ -1133,26 +1134,26 @@ def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory("data", path, as_attachment=True)
 
-
-app.index_string = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>Matriz de Água</title>
-        {%favicon%}
-        {%css%}
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
+#
+# app.index_string = '''
+# <!DOCTYPE html>
+# <html>
+#     <head>
+#         {%metas%}
+#         <title>Matriz de Água</title>
+#         {%favicon%}
+#         {%css%}
+#     </head>
+#     <body>
+#         {%app_entry%}
+#         <footer>
+#             {%config%}
+#             {%scripts%}
+#             {%renderer%}
+#         </footer>
+#     </body>
+# </html>
+# '''
 
 app.layout = html.Div([
 
@@ -2854,5 +2855,5 @@ def update_map_ar(ano_mem, at, restyleData, data):
 
 if __name__ == '__main__':
     # app.run_server(debug=False, port = 5000, host ='0.0.0.0')
+    # app.run_server(debug=True)
     app.run_server(debug=False)
-#     app.run_server(debug=True, port=8080)
