@@ -79,8 +79,8 @@ max_sector_total = math.ceil(sector_df.iloc[:, :-1].max().max() / 1000)
 size_small = 192
 color_live = ["#8DD3C7", "#fff069", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#f032e6", "#000075",
               "#4a915f", "#ffe119"]
-color_dead = ["#d3ede9", "#FFF9C4", "#e3e1ed", "#f5d4d0", "#cee1ed", "#fae0c3", "#e7f2d3", "#eba9e7", "#b5b5f5",
-              "#cef2d9", "#fffacf"]
+color_dead = ["#96ebde", "#f7efa6", "#c1bae8", "#f0ada5", "#a7d0eb", "#f0c595", "#d4f0a3", "#e691e0", "#9595e8",
+              "#90e8ab", "#f0e79e"]
 
 color_sector_live_d = {"Doméstico": color_live[0],
                        "Comércio e Indústria": color_live[1],
@@ -1377,7 +1377,10 @@ def create_ano_bar_graph(df, ano_select, per_capita):
     # ano_select = 2017
     # df = bal_potavel_df
     ano_posi = list(df.index).index(ano_select)
-    color_fill = ['#9BD7F1', ] * len(df.index)
+
+    # color_fill = ['#9BD7F1', ] * len(df.index)
+
+    color_fill = ['#85ceed', ] * len(df.index)
     color_fill[ano_posi] = '#029CDE'
     color_line = ['#029CDE', ] * len(df.index)
     if per_capita == 2:
