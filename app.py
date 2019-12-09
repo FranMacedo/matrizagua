@@ -21,7 +21,8 @@ ctx = dash.callback_context
 
 mapbox_access_token = 'pk.eyJ1IjoiZm1hY2VkbyIsImEiOiJjanp0a3FlZzEwNXdyM2hteDRmOTNsZDI3In0.UMzEBHFVDraOT5AkHcbe7A'
 
-family_generico = "'Abel', sans-serif"
+# family_generico = "'Abel', sans-serif"
+family_generico = "'Questrial', sans-serif"
 size_generico = 15
 cl_scale_blues = [[0, '#c6dbf7'], [1, '#165bb8']]
 
