@@ -1922,7 +1922,7 @@ def update_donut(ano_mem, drop_cons):
                                      sort=False)])
         title_donut = "Consumo por Sector de Consumo, em {}".format(ano_select)
         text_info = dcc.Markdown('''
-        _Deste o ano de 2014, na sequência da reorganização administrativa 
+        _No ano de 2014, na sequência da reorganização administrativa 
         da cidade de Lisboa, houve transferência da titularidade de contratos da CML (Câmara Municipal de Lisboa)
          para as Juntas de Freguesia, designados de Delegação CML, o que causou o aumento dos consumos das Juntas._
          ''')
