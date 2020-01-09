@@ -2466,8 +2466,8 @@ def update_ar_timeseries(drop_ar, at):
 
     if all(elem in ar_reu_df.Subsistema.unique() for elem in drop_ar):
         df.assign(quantity=df.Total.mul(1000))
-        unidade_temp = unidade_2
-        title = "Milhares de " + unidade
+        unidade_temp = unidade_1
+        title = "Milhões de " + unidade
     else:
         unidade_temp = unidade_1
         title = "Milhões de " + unidade
