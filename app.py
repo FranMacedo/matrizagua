@@ -780,7 +780,7 @@ collapse_bal = html.Div(
         dbc.Collapse(
             dbc.Card(dbc.CardBody(
                 dcc.Markdown('''
-                _De toda a água potável entrada na cidade de Lisboa (Água para consumo humano) parte é entregue a outros municípios e a restante é utilizida na capital._ 
+                _De toda a água potável que entra na cidade de Lisboa (Água para consumo humano) parte é entregue a outros municípios e a restante é utilizida na capital._ 
 
                 _Da água utilizada na cidade, existem dois tipos de perdas principais:_
                 * _**Perdas físicas ou reais**: traduzem a água realmente perdida na sequência de fugas e/ou roturas na rede de distribuição; _
