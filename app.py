@@ -48,7 +48,7 @@ file_path_freg = "data/Freguesias_agua_potavel.xlsx"
 file_path_sector = "data/sector.xlsx"
 file_path_freg_center = 'data/freguesias_centro.csv'
 file_path_ndom = "data/nao_domestico.xlsx"
-file_path_balanco_geral = "data/Balanco_geral.xlsx"
+# file_path_balanco_geral = "data/Balanco_geral.xlsx"
 file_path_balanco_potavel = "data/Balanco_potavel.xlsx"
 file_path_bal_potavel_ts = "data/bal_potavel_ts.xlsx"
 file_path_ar = "data/aguas_residuais.xlsx"
@@ -60,6 +60,7 @@ df_fregs = pd.read_excel(file_path_freg)
 
 freg_center = pd.read_csv(file_path_freg_center, encoding='utf-8')
 sector_df = pd.read_excel(file_path_sector, index_col='Ano')
+print(sector_df)
 ndom_df = pd.read_excel(file_path_ndom, index_col='Ano')
 bal_potavel_df = pd.read_excel(file_path_balanco_potavel, index_col='Ano')
 bal_pot_ts_df = pd.read_excel(file_path_bal_potavel_ts, index_col='Ano')
@@ -72,8 +73,8 @@ anos_ar = aguas_r_df.index.unique().tolist()
 anos_bal = bal_potavel_df.index.unique().tolist()
 
 populacao = pd.Series(
-    [563149, 550934, 549998, 548422, 537412, 524282, 511667, 513064, 506892, 504718, 505526, 506654],
-    index=[2001, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018],
+    [563149, 550934, 549998, 548422, 537412, 524282, 511667, 513064, 506892, 504718, 505526, 506654, 509515],
+    index=[2001, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
 )
 
 max_sector_total = math.ceil(sector_df.iloc[:, :-1].max().max() / 1000)
@@ -1212,7 +1213,7 @@ def update_buttons(type_bar, ano_bar_graph_selected, trigger, anos, tab):
     ,
     [Input("ano-bar-graph", "clickData")] + [Input(f"sel_{a}_cons", "n_clicks") for a in anos_cons]
 )
-def update_button_outline_cons(ano_bar_graph_selected, sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018):
+def update_button_outline_cons(ano_bar_graph_selected, sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018, sel_2019):
     if not ctx.triggered:
         raise PreventUpdate
 
@@ -1226,7 +1227,7 @@ def update_button_outline_cons(ano_bar_graph_selected, sel_2013, sel_2014, sel_2
     [Input("ano-bar-graph-ar", "clickData")] + [Input(f"sel_{a}_ar", "n_clicks") for a in anos_ar]
 )
 def update_button_outline_ar(ano_bar_graph_selected, sel_03, sel_04, sel_05, sel_06, sel_07, sel_08, sel_09, sel_10,
-                             sel_11, sel_12, sel_13, sel_14, sel_15, sel_16, sel_17, sel_18):
+                             sel_11, sel_12, sel_13, sel_14, sel_15, sel_16, sel_17, sel_18, sel_19):
     if not dash.callback_context.triggered:
         raise PreventUpdate
 
@@ -1240,7 +1241,7 @@ def update_button_outline_ar(ano_bar_graph_selected, sel_03, sel_04, sel_05, sel
     [Input("ano-bar-graph-bal", "clickData")] + [Input(f"sel_{a}_bal", "n_clicks") for a in anos_bal]
 )
 def update_button_outline_bal(ano_bar_graph_selected, sel_2008, sel_2009,
-                              sel_2010, sel_2011, sel_2012, sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018):
+                              sel_2010, sel_2011, sel_2012, sel_2013, sel_2014, sel_2015, sel_2016, sel_2017, sel_2018, sel_2019):
     if not dash.callback_context.triggered:
         raise PreventUpdate
 
