@@ -60,7 +60,6 @@ df_fregs = pd.read_excel(file_path_freg)
 
 freg_center = pd.read_csv(file_path_freg_center, encoding='utf-8')
 sector_df = pd.read_excel(file_path_sector, index_col='Ano')
-print(sector_df)
 ndom_df = pd.read_excel(file_path_ndom, index_col='Ano')
 bal_potavel_df = pd.read_excel(file_path_balanco_potavel, index_col='Ano')
 bal_pot_ts_df = pd.read_excel(file_path_bal_potavel_ts, index_col='Ano')
